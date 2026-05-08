@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lego Lunch">
+<meta name="theme-color" content="#1a1714">
+<meta name="description" content="Modular meal prep builder — shuffle 290 ingredients into freezer-ready lego meals">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<title>Lego Lunch Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1714;--paper:#faf8f4;--cream:#f2ede4;--warm:#e8e0d0;
+  --red:#c13a2a;--red-soft:#fce8e5;
+  --green:#2a6644;--green-soft:#e4f0e8;
+  --amber:#8a5a0a;--amber-soft:#fef3d8;
+  --purple:#4a2d7a;--purple-soft:#ede8f8;
+  --blue:#1a4060;--blue-soft:#e4eef8;
+  --teal:#1a5550;--teal-soft:#e0f0ee;
+  --orange:#7a3010;--orange-soft:#fde8dc;
+  --indigo:#1e2a7a;--indigo-soft:#e6eaf8;
+  --pink:#7a1545;--pink-soft:#fce4ee;
+  --r:12px;--r-sm:8px;--r-lg:16px;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+  --font-head:'Syne',sans-serif;
+  --font-body:'Instrument Sans',sans-serif;
+  --transition:all .2s cubic-bezier(.4,0,.2,1);
+}
+
+html{font-size:14px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font-body);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--warm);border-radius:3px}
+
+/* ── HEADER ── */
+.header{
+  background:var(--ink);color:var(--paper);
+  padding:16px 24px;display:flex;align-items:center;gap:20px;
+  position:sticky;top:0;z-index:100;
+}
+.header-logo{font-family:var(--font-head);font-size:22px;font-weight:800;letter-spacing:-0.5px;flex-shrink:0}
+.header-logo span{color:#f5c542}
+.header-tabs{display:flex;gap:2px;flex:1;overflow:hidden;}
+.htab{
+  padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;color:rgba(255,255,255,.5);transition:var(--transition);white-space:nowrap;
+  font-family:var(--font-head);letter-spacing:.3px;
+}
+.htab:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.08)}
+.htab.active{background:#f5c542;color:var(--ink)}
+.header-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.stat-chip{
+  background:rgba(255,255,255,.1);border-radius:20px;
+  padding:4px 12px;font-size:11px;color:rgba(255,255,255,.6);
+  font-family:var(--font-head);
+}
+.stat-chip b{color:#f5c542}
+
+/* ── BUILDER LAYOUT ── */
+.builder-wrap{display:flex;height:calc(100vh - 56px);overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:280px;flex-shrink:0;background:var(--cream);border-right:1px solid var(--warm);display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.sidebar-section{padding:16px 16px 12px;border-bottom:1px solid var(--warm)}
+.sidebar-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#999;margin-bottom:10px}
+
+/* Controls */
+.ctrl-group{display:flex;flex-direction:column;gap:6px}
+.ctrl-row{display:flex;gap:6px}
+select,input[type=text]{
+  font-family:var(--font-body);font-size:12px;
+  background:white;border:1.5px solid var(--warm);color:var(--ink);
+  border-radius:var(--r-sm);padding:7px 10px;width:100%;
+  transition:var(--transition);outline:none;cursor:pointer;
+}
+select:focus,input:focus{border-color:var(--ink)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;appearance:none;padding-right:26px}
+
+.btn{
+  font-family:var(--font-head);font-size:12px;font-weight:700;letter-spacing:.5px;
+  border:none;border-radius:var(--r-sm);padding:9px 14px;cursor:pointer;
+  transition:var(--transition);display:flex;align-items:center;gap:6px;justify-content:center;
+}
+.btn-primary{background:var(--ink);color:#f5c542}
+.btn-primary:hover{background:#2d2924}
+.btn-chaos{background:#c13a2a;color:white}
+.btn-chaos:hover{background:#a52e20}
+.btn-ghost{background:var(--warm);color:var(--ink)}
+.btn-ghost:hover{background:#d8cfc0}
+.btn-accent{background:#f5c542;color:var(--ink)}
+.btn-accent:hover{background:#e8b830}
+.btn-green{background:#2a6644;color:white}
+.btn-green:hover{background:#1f5035}
+.btn-sm{padding:6px 10px;font-size:11px}
+.btn-full{width:100%}
+
+/* Goal sliders */
+.goal-wrap{display:flex;flex-direction:column;gap:8px}
+.goal-row{display:flex;flex-direction:column;gap:4px}
+.goal-label{display:flex;justify-content:space-between;font-size:11px;color:#888}
+.goal-bar-bg{height:6px;background:var(--warm);border-radius:3px;overflow:hidden}
+.goal-bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+
+/* Sidebar info panel */
+.sidebar-info{flex:1;overflow-y:auto;padding:14px 16px}
+.info-section{margin-bottom:14px}
+.info-section-title{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#aaa;margin-bottom:6px;font-family:var(--font-head)}
+.info-tag{display:inline-flex;align-items:center;gap:4px;background:white;border:1px solid var(--warm);border-radius:20px;padding:3px 9px;font-size:11px;margin:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.shared-ing-badge{background:var(--amber-soft);color:var(--amber);border-color:transparent;font-weight:600}
+.seq-step{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.seq-num{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#f5c542;font-family:var(--font-head);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.seq-body{font-size:11px;color:#555;line-height:1.5;word-break:break-word;min-width:0;}
+.seq-body strong{color:var(--ink);font-weight:600}
+.seq-timing{font-size:10px;color:#aaa;font-family:var(--font-head);letter-spacing:.3px}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;overflow-y:auto;padding:20px 24px;background:var(--paper);min-width:0;overflow-x:hidden;}
+
+/* Totals bar */
+.totals-bar{display:grid;grid-template-columns:repeat(6,1fr) 1.6fr;background:white;border:1.5px solid var(--warm);border-radius:var(--r);margin-bottom:20px;overflow:hidden;box-shadow:var(--shadow);}
+.total-cell{flex:1;padding:10px 12px;border-right:1px solid var(--warm);min-width:90px;}
+.total-cell:last-child{border-right:none;}
+.total-val{font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--ink);line-height:1;white-space:nowrap;}
+.total-lbl{font-size:10px;color:#aaa;letter-spacing:.8px;text-transform:uppercase;margin-top:2px;font-family:var(--font-head)}
+.total-cuisine{font-size:12px;font-weight:600;color:var(--green);margin-top:2px;white-space:nowrap;}
+.total-warn{font-size:10px;color:var(--red);margin-top:2px}
+
+/* ── BRICK GRID ── */
+.brick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+
+/* ── BRICK ── */
+.brick{background:white;border-radius:var(--r);border:1.5px solid var(--warm);overflow:hidden;transition:var(--transition);position:relative;cursor:default;box-shadow:var(--shadow);min-width:0;}
+.brick:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#d0c8b8}
+.brick.locked{border-color:var(--ink);box-shadow:0 0 0 3px rgba(26,23,20,.12)}
+
+/* Brick top stripe */
+.brick-stripe{height:4px;width:100%}
+.brick[data-cat="Proteins"] .brick-stripe{background:var(--red)}
+.brick[data-cat="Vegetables"] .brick-stripe{background:var(--green)}
+.brick[data-cat="Starches / Carbs"] .brick-stripe{background:var(--amber)}
+.brick[data-cat="Sauces / Flavor Bases"] .brick-stripe{background:var(--purple)}
+.brick[data-cat="Soups / Stews"] .brick-stripe{background:var(--blue)}
+.brick[data-cat="Noodles & Dumplings"] .brick-stripe{background:var(--teal)}
+.brick[data-cat="Warm Puddings & Comfort"] .brick-stripe{background:var(--orange)}
+.brick[data-cat="Grain Bowls & Specialty Bases"] .brick-stripe{background:var(--indigo)}
+.brick[data-cat="Desserts"] .brick-stripe{background:var(--pink)}
+
+.brick-body{padding:12px 14px 0;}
+
+.brick-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.brick-label{min-width:0;flex:1;}
+.brick-cat{font-family:var(--font-head);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.brick-name{font-size:15px;font-weight:700;line-height:1.35;color:var(--ink);margin-bottom:10px;word-break:break-word;overflow-wrap:break-word;padding-right:28px;}
+.brick[data-cat="Proteins"] .brick-cat{color:var(--red)}
+.brick[data-cat="Vegetables"] .brick-cat{color:var(--green)}
+.brick[data-cat="Starches / Carbs"] .brick-cat{color:var(--amber)}
+.brick[data-cat="Sauces / Flavor Bases"] .brick-cat{color:var(--purple)}
+.brick[data-cat="Soups / Stews"] .brick-cat{color:var(--blue)}
+.brick[data-cat="Noodles & Dumplings"] .brick-cat{color:var(--teal)}
+.brick[data-cat="Warm Puddings & Comfort"] .brick-cat{color:var(--orange)}
+.brick[data-cat="Grain Bowls & Specialty Bases"] .brick-cat{color:var(--indigo)}
+.brick[data-cat="Desserts"] .brick-cat{color:var(--pink)}
+
+
+
+.brick-score{font-family:var(--font-head);font-size:22px;font-weight:800;line-height:1;white-space:nowrap;flex-shrink:0;}
+.brick[data-cat="Proteins"] .brick-score{color:var(--red)}
+.brick[data-cat="Vegetables"] .brick-score{color:var(--green)}
+.brick[data-cat="Starches / Carbs"] .brick-score{color:var(--amber)}
+.brick[data-cat="Sauces / Flavor Bases"] .brick-score{color:var(--purple)}
+.brick[data-cat="Soups / Stews"] .brick-score{color:var(--blue)}
+.brick[data-cat="Noodles & Dumplings"] .brick-score{color:var(--teal)}
+.brick[data-cat="Warm Puddings & Comfort"] .brick-score{color:var(--orange)}
+.brick[data-cat="Grain Bowls & Specialty Bases"] .brick-score{color:var(--indigo)}
+.brick[data-cat="Desserts"] .brick-score{color:var(--pink)}
+.brick-score-label{font-size:8px;color:#bbb;font-family:var(--font-head);letter-spacing:.5px;text-transform:uppercase}
+.brick-score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.brick-score-denom{font-size:12px;font-weight:400;color:#bbb;}
+.lock-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.85);border:1.5px solid var(--warm);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:var(--transition);color:#ccc;font-weight:700;line-height:1;}
+.lock-btn:hover{background:var(--amber-soft);border-color:var(--amber);color:var(--amber);}
+.lock-btn.locked{background:#f5c542;border-color:var(--amber);color:var(--ink);}
+.detail-lbl{font-weight:600;color:var(--ink);margin-right:3px;}
+.brick-note{font-size:10px;color:#aaa;margin-bottom:8px;font-style:italic;line-height:1.4;}
+
+/* Rating bar */
+.rating-track{height:4px;background:var(--warm);border-radius:2px;overflow:hidden;}
+.rating-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.34,1.56,.64,1);}
+.brick[data-cat="Proteins"] .rating-fill{background:var(--red)}
+.brick[data-cat="Vegetables"] .rating-fill{background:var(--green)}
+.brick[data-cat="Starches / Carbs"] .rating-fill{background:var(--amber)}
+.brick[data-cat="Sauces / Flavor Bases"] .rating-fill{background:var(--purple)}
+.brick[data-cat="Soups / Stews"] .rating-fill{background:var(--blue)}
+.brick[data-cat="Noodles & Dumplings"] .rating-fill{background:var(--teal)}
+.brick[data-cat="Warm Puddings & Comfort"] .rating-fill{background:var(--orange)}
+.brick[data-cat="Grain Bowls & Specialty Bases"] .rating-fill{background:var(--indigo)}
+.brick[data-cat="Desserts"] .rating-fill{background:var(--pink)}
+
+/* Macro pills */
+.macro-row{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px;}
+.macro{background:var(--cream);border-radius:20px;padding:2px 7px;font-size:10px;font-weight:500;color:#666;font-family:var(--font-head);white-space:nowrap;}
+.macro.highlight{background:var(--amber-soft);color:var(--amber)}
+
+/* Details grid */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin-bottom:8px;}
+.detail{font-size:11px;color:#777;line-height:1.7;}
+
+
+/* Tags */
+.tag-row{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px;}
+.tag{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;font-family:var(--font-head);white-space:nowrap;}
+.tag-cuisine{background:var(--cream);color:#777;border:1px solid var(--warm)}
+.tag-diet{background:var(--green-soft);color:var(--green);border:1px solid #c0dcc8}
+.tag-vg{background:var(--teal-soft);color:var(--teal)}
+.tag-gf{background:var(--amber-soft);color:var(--amber)}
+.tag-df{background:var(--blue-soft);color:var(--blue)}
+.tag-shared{background:var(--amber-soft);color:var(--amber)}
+
+/* Compat hint */
+.compat-hint{font-size:10px;color:var(--green);font-weight:500;margin-bottom:6px;}
+.conflict-hint{font-size:10px;color:var(--red);font-weight:500;margin-bottom:6px;background:var(--red-soft);padding:3px 8px;border-radius:6px;}
+
+/* Brick footer */
+.brick-footer{display:flex;border-top:1px solid var(--warm);margin:8px -14px 0;}
+.bfoot-btn{flex:1;padding:8px 4px;font-size:10px;font-weight:600;color:#aaa;background:none;border:none;border-right:1px solid var(--warm);cursor:pointer;font-family:var(--font-head);transition:var(--transition);text-align:center;white-space:nowrap;}
+.bfoot-btn:last-child{border-right:none}
+.bfoot-btn:hover{background:var(--cream);color:var(--ink)}
+.bfoot-btn.lock-active{color:var(--ink);background:var(--amber-soft)}
+
+/* Lock icon */
+
+
+
+
+/* Empty slot */
+.empty-slot{
+  background:white;border:2px dashed var(--warm);border-radius:var(--r);
+  padding:36px;text-align:center;color:#bbb;
+  font-size:12px;font-family:var(--font-head);letter-spacing:.5px;
+}
+
+/* Animations */
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.94)}60%{transform:scale(1.02)}100%{transform:scale(1)}}
+.anim-in{animation:slideUp .22s ease both}
+.anim-pop{animation:pop .25s ease both}
+
+/* ── WEEKLY PLANNER ── */
+.week-grid{display:flex;flex-direction:column;gap:10px}
+.week-day-card{background:white;border:1.5px solid var(--warm);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.week-day-head{padding:10px 16px;background:var(--ink);display:flex;align-items:center;justify-content:space-between}
+.week-day-name{font-family:var(--font-head);font-size:16px;font-weight:800;color:#f5c542;letter-spacing:.5px}
+.week-day-stats{font-size:11px;color:rgba(255,255,255,.6);font-family:var(--font-head)}
+.week-day-bricks{padding:10px 14px;display:flex;gap:6px;flex-wrap:wrap}
+.mini-brick{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 9px;font-size:10px;font-weight:600;border:1.5px solid;font-family:var(--font-head);letter-spacing:.2px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── HISTORY & FAVORITES ── */
+.list-card{
+  background:white;border:1.5px solid var(--warm);border-radius:var(--r);
+  padding:14px 16px;margin-bottom:8px;cursor:pointer;
+  transition:var(--transition);box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:12px;
+}
+.list-card:hover{border-color:#d0c8b8;transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.list-card-meta{font-size:11px;color:#aaa;font-family:var(--font-head);flex-shrink:0;text-align:right}
+.list-card-name{font-weight:600;font-size:14px;margin-bottom:4px}
+.list-card-bricks{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.star-rating{color:#f5c542;font-size:14px;letter-spacing:-1px}
+.empty-state{text-align:center;padding:60px 20px;color:#bbb;font-family:var(--font-head);font-size:13px;letter-spacing:.5px}
+
+/* ── SPOTLIGHT ── */
+.spotlight-wrap{max-width:900px}
+.spotlight-search-bar{display:flex;gap:8px;margin-bottom:16px}
+.spotlight-search-bar input{flex:1;font-size:14px;padding:10px 14px}
+.spotlight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.spot-card{
+  background:white;border:1.5px solid var(--warm);border-radius:var(--r-sm);
+  padding:12px;cursor:pointer;transition:var(--transition);
+}
+.spot-card:hover{border-color:#d0c8b8;transform:translateY(-1px);box-shadow:var(--shadow)}
+.spot-name{font-weight:600;font-size:12px;margin-bottom:4px;line-height:1.3;word-break:break-word;}
+.spot-cat{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-head)}
+.spot-score{font-family:var(--font-head);font-size:18px;font-weight:800}
+.spot-detail{background:white;border:1.5px solid var(--warm);border-radius:var(--r);padding:20px;margin-top:14px}
+.spot-detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:14px 0}
+.spot-stat{background:var(--cream);border-radius:var(--r-sm);padding:10px 12px}
+.spot-stat-val{font-family:var(--font-head);font-size:18px;font-weight:800}
+.spot-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#aaa;font-family:var(--font-head)}
+
+/* ── MODALS ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--paper);border-radius:var(--r-lg);padding:24px;width:400px;max-width:90vw;transform:translateY(8px);transition:transform .2s;box-shadow:var(--shadow-lg)}
+.modal-bg.open .modal{transform:none}
+.modal-title{font-family:var(--font-head);font-size:20px;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:12px;color:#aaa;margin-bottom:16px;font-family:var(--font-head)}
+.modal-stars{display:flex;gap:6px;margin-bottom:16px}
+.modal-star{font-size:28px;cursor:pointer;opacity:.25;transition:var(--transition)}
+.modal-star.on{opacity:1;transform:scale(1.1)}
+textarea,input[type=text].modal-inp{
+  width:100%;background:white;border:1.5px solid var(--warm);border-radius:var(--r-sm);
+  padding:10px 12px;font-family:var(--font-body);font-size:13px;color:var(--ink);
+  outline:none;transition:var(--transition);
+}
+textarea:focus,input[type=text].modal-inp:focus{border-color:var(--ink)}
+textarea{resize:vertical;min-height:70px;margin-bottom:14px}
+input[type=text].modal-inp{margin-bottom:12px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* Shopping list */
+.shop-list{display:flex;flex-direction:column;gap:4px}
+.shop-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:white;border-radius:var(--r-sm);border:1px solid var(--warm)}
+.shop-check{width:18px;height:18px;border:2px solid var(--warm);border-radius:4px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.shop-check.done{background:var(--green);border-color:var(--green);color:white}
+.shop-name{flex:1;font-size:12px;font-weight:500}
+.shop-meals{font-size:10px;color:#aaa}
+
+/* ── TABS (non-builder) ── */
+.page-wrap{padding:24px;max-width:1200px;overflow-x:hidden;}
+.page-title{font-family:var(--font-head);font-size:28px;font-weight:800;margin-bottom:16px;color:var(--ink)}
+.page-controls{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+
+/* ── COMPACT MODE ── */
+.brick-grid.compact .detail-grid,
+.brick-grid.compact .tag-row,
+.brick-grid.compact .brick-footer{display:none}
+.brick-grid.compact .brick-body{padding:10px 12px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:720px){
+  .sidebar{display:none}
+  .header-tabs .htab:not(.active){display:none}
+  .brick-grid{grid-template-columns:1fr}
+  .totals-bar{flex-wrap:wrap}
+}
+
+.pantry-wrap{max-width:1200px;}
+.pantry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;}
+.pantry-group{grid-column:1/-1;padding:10px 0 4px;font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;border-bottom:1px solid var(--warm);margin-bottom:2px;}
+.pantry-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;background:white;border:1.5px solid var(--warm);
+  border-radius:var(--r-sm);cursor:pointer;transition:var(--transition);
+  user-select:none;
+}
+.pantry-item:hover{border-color:#d0c8b8;background:var(--cream);}
+.pantry-item.checked{background:var(--green-soft);border-color:#a0ccb0;}
+.pantry-item.checked .pantry-check{background:var(--green);border-color:var(--green);color:white;}
+.pantry-check{
+  width:18px;height:18px;flex-shrink:0;border-radius:4px;
+  border:2px solid var(--warm);display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:700;transition:var(--transition);
+}
+.pantry-label{font-size:12px;font-weight:500;color:var(--ink);line-height:1.3;}
+.pantry-item.checked .pantry-label{color:var(--green);font-weight:600;}
+.pantry-match-tag{font-size:9px;font-family:var(--font-head);font-weight:700;letter-spacing:.5px;background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:1px 6px;margin-left:auto;flex-shrink:0;}
+
+/* ════════════════════════════════════
+   MOBILE / PWA STYLES
+   ════════════════════════════════════ */
+
+/* Safe area for notched phones */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --nav-height: 62px;
+}
+
+html, body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ── HEADER mobile ── */
+.header {
+  padding: 12px 16px;
+  padding-top: calc(12px + var(--safe-top));
+  position: sticky; top: 0; z-index: 100;
+}
+.header-logo { font-size: 18px; }
+.header-right { gap: 6px; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-height) + var(--safe-bottom));
+  background: var(--ink);
+  display: flex;
+  border-top: 1px solid rgba(255,255,255,.08);
+  z-index: 200;
+  padding-bottom: var(--safe-bottom);
+}
+.bnav-btn {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; background: none; border: none;
+  cursor: pointer; padding: 8px 0;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.bnav-icon { font-size: 20px; line-height: 1; }
+.bnav-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.4); font-family: var(--font-head); letter-spacing: .5px; text-transform: uppercase; }
+.bnav-btn.active .bnav-label { color: #f5c542; }
+.bnav-btn.active .bnav-icon { filter: drop-shadow(0 0 6px rgba(245,197,66,.6)); }
+
+/* ── SLIDE-UP DRAWER ── */
+.drawer-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  z-index: 300; opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+.drawer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--paper);
+  border-radius: 20px 20px 0 0;
+  z-index: 400;
+  padding: 0 0 calc(24px + var(--safe-bottom));
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 -8px 40px rgba(0,0,0,.2);
+}
+.drawer.open { transform: translateY(0); }
+.drawer-handle { width: 36px; height: 4px; background: var(--warm); border-radius: 2px; margin: 12px auto; }
+.drawer-title { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #aaa; padding: 0 20px 10px; }
+.drawer-items { display: flex; flex-direction: column; }
+.drawer-item { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: none; border: none; font-family: var(--font-body); font-size: 16px; font-weight: 500; cursor: pointer; text-align: left; transition: var(--transition); }
+.drawer-item:hover, .drawer-item:active { background: var(--cream); }
+
+/* ── MOBILE FILTER BAR ── */
+.mobile-filter-bar {
+  display: none;
+  padding: 10px 16px 8px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--warm);
+  gap: 8px; flex-wrap: wrap; align-items: center;
+}
+.filter-pill {
+  background: var(--ink); color: #f5c542;
+  border: none; border-radius: 20px;
+  padding: 8px 18px; font-family: var(--font-head);
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  cursor: pointer;
+}
+.active-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.active-filter-tag {
+  background: var(--cream); border: 1px solid var(--warm);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 11px; font-weight: 500; color: #666;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ── FILTER SHEET ── */
+.filter-sheet-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 150; opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.filter-sheet-overlay.open { opacity: 1; pointer-events: all; }
+.filter-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  max-height: 88vh;
+  background: var(--paper);
+  border-radius: 20px 20px 0 0;
+  z-index: 160;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  padding-bottom: calc(var(--safe-bottom) + var(--nav-height));
+  box-shadow: 0 -8px 40px rgba(0,0,0,.2);
+}
+.filter-sheet.open { transform: translateY(0); }
+.filter-sheet .sidebar { width: 100%; border: none; background: transparent; overflow: visible; }
+.filter-sheet .sidebar-section { border-bottom: 1px solid var(--warm); }
+.filter-sheet .sidebar-info { padding: 16px; }
+
+/* ── BUILDER LAYOUT mobile ── */
+.builder-wrap {
+  flex-direction: column;
+  height: calc(100vh - 56px - var(--safe-top) - var(--nav-height));
+  overflow: hidden;
+}
+.main {
+  padding: 12px 12px 8px;
+  padding-bottom: calc(8px + var(--nav-height));
+}
+.totals-bar {
+  grid-template-columns: repeat(3,1fr) repeat(3,1fr);
+  margin-bottom: 12px;
+}
+.totals-bar .total-cell:nth-child(7) { grid-column: 1/-1; border-top: 1px solid var(--warm); }
+.brick-grid { grid-template-columns: 1fr; gap: 10px; }
+
+/* ── PAGE CONTENT mobile ── */
+.page-wrap {
+  padding: 16px;
+  padding-bottom: calc(16px + var(--nav-height) + var(--safe-bottom));
+  overflow-y: auto;
+  height: calc(100vh - 56px - var(--safe-top));
+}
+
+/* ── TOUCH-FRIENDLY buttons ── */
+.btn { min-height: 40px; }
+.bfoot-btn { padding: 12px 4px; font-size: 11px; min-height: 42px; }
+.brick-footer { margin: 6px -14px 0; }
+
+/* ── SWIPE HINT ── */
+.swipe-hint {
+  text-align: center; font-size: 11px; color: #bbb;
+  font-family: var(--font-head); letter-spacing: .5px;
+  padding: 4px 0 8px; display: none;
+}
+
+/* ── LARGER tap targets for checkboxes ── */
+.pantry-item { padding: 12px 14px; min-height: 48px; }
+.shop-item { padding: 12px; min-height: 48px; }
+
+/* ── MODALS: full-screen on mobile ── */
+.modal-bg { align-items: flex-end; }
+.modal {
+  width: 100%; max-width: 100%;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px calc(24px + var(--safe-bottom));
+  transform: translateY(20px);
+}
+.modal-bg.open .modal { transform: translateY(0); }
+
+/* ════════════════════════════════════
+   DESKTOP OVERRIDES
+   ════════════════════════════════════ */
+@media (min-width: 768px) {
+  :root { --nav-height: 0px; }
+  .bottom-nav { display: none; }
+  .drawer { display: none; }
+  .mobile-filter-bar { display: none; }
+  .filter-sheet-overlay { display: none; }
+  .filter-sheet {
+    position: relative; transform: none !important;
+    max-height: none; border-radius: 0; box-shadow: none;
+    padding-bottom: 0; overflow: visible; z-index: auto;
+    background: transparent;
+  }
+  .filter-sheet .sidebar {
+    width: 280px; border-right: 1px solid var(--warm);
+    background: var(--cream); overflow-y: auto;
+    height: calc(100vh - 56px);
+  }
+  .builder-wrap { flex-direction: row; height: calc(100vh - 56px); }
+  .main { padding: 20px 24px; }
+  .brick-grid { grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); }
+  .totals-bar { grid-template-columns: repeat(6,1fr) 1.6fr; }
+  .totals-bar .total-cell:nth-child(7) { grid-column: auto; border-top: none; }
+  .page-wrap { height: auto; padding: 24px; padding-bottom: 24px; }
+  .modal-bg { align-items: center; }
+  .modal { width: 400px; border-radius: var(--r-lg); padding: 24px; transform: translateY(8px); }
+  .modal-bg.open .modal { transform: none; }
+  .bfoot-btn { padding: 8px 4px; min-height: auto; }
+  .swipe-hint { display: none !important; }
+}
+
+@media (max-width: 767px) {
+  /* Show mobile filter bar */
+  .mobile-filter-bar { display: flex; }
+  /* Hide desktop sidebar */
+  #sidebar-inner { display: none; }
+  /* Add swipe hint to first brick */
+  .brick-grid::before {
+    content: "← swipe bricks to swap →";
+    grid-column: 1/-1;
+    text-align: center; font-size: 11px; color: #ccc;
+    font-family: var(--font-head); letter-spacing: .5px;
+    padding-bottom: 4px;
+  }
+}
+
+@media print{
+  .header,.sidebar,.brick-footer,.lock-overlay{display:none!important}
+  .builder-wrap{display:block}
+  .brick{break-inside:avoid;box-shadow:none;border-color:#ddd}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">LEGO<span>🧱</span>LUNCH</div>
+  <nav class="header-tabs">
+    <div class="htab active" onclick="showTab('builder')">Builder</div>
+    <div class="htab" onclick="showTab('weekly')">Week Planner</div>
+    <div class="htab" onclick="showTab('history')">History</div>
+    <div class="htab" onclick="showTab('favorites')">Saved</div>
+    <div class="htab" onclick="showTab('spotlight')">Spotlight</div>
+    <div class="htab" onclick="showTab('pantry')">🥫 Pantry</div>
+  </nav>
+  <div class="header-right">
+    <div class="stat-chip"><b id="hd-items">290</b> ingredients</div>
+    <div class="stat-chip" id="pantry-chip" style="display:none;background:#e4f0e8;color:#2a6644;border:1px solid #c0dcc8">🥫 <b id="pantry-count">0</b> pantry items</div>
+    <div class="stat-chip">Week est. <b>$<span id="hd-week-cost">—</span></b></div>
+  </div>
+</header>
+
+<!-- ══════════ BUILDER ══════════ -->
+<div id="page-builder" class="builder-wrap">
+
+  <!-- MOBILE FILTERS SHEET TOGGLE -->
+  <div class="mobile-filter-bar">
+    <button class="filter-pill active" onclick="toggleFilterSheet()" id="filter-pill-btn">
+      <span id="filter-pill-text">⟳ SHUFFLE</span>
+    </button>
+    <div id="active-filters-row" class="active-filters"></div>
+  </div>
+
+  <!-- FILTER SHEET (slides up on mobile) -->
+  <div class="filter-sheet-overlay" id="filter-sheet-overlay" onclick="closeFilterSheet()"></div>
+  <div class="filter-sheet" id="filter-sheet">
+    <div class="drawer-handle" style="margin:10px auto 16px"></div>
+
+  <!-- SIDEBAR (desktop) / SHEET CONTENT (mobile) -->
+  <aside class="sidebar" id="sidebar-inner">
+    <!-- Shuffle controls -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Shuffle Controls</div>
+      <div class="ctrl-group">
+        <div class="ctrl-row">
+          <button class="btn btn-primary btn-full" onclick="shuffle()">⟳ SHUFFLE</button>
+          <button class="btn btn-chaos btn-sm" onclick="shuffle('chaos')" title="Chaos mode — weight toward unusual">🎲</button>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="shuffleSurprise()">✦ SURPRISE ME</button>
+        <div class="ctrl-row">
+          <button class="btn btn-ghost btn-sm" onclick="clearLocks()" title="Clear all locks">🔓 Unlock all</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleCompact()" id="btn-compact">⊞ Compact</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Filters</div>
+      <div class="ctrl-group">
+        <select id="f-mode" onchange="shuffle()">
+          <option value="bowl">🥣 Bowl (protein+starch+veg+sauce)</option>
+          <option value="soup">🍲 Soup Meal</option>
+          <option value="noodle">🍜 Noodle Bowl</option>
+          <option value="comfort">🧀 Comfort Plate</option>
+          <option value="dessert">🍰 Dessert Build</option>
+        </select>
+        <select id="f-cuisine">
+          <option value="">Any cuisine</option>
+          <option value="__coherent__" style="font-style:italic">— Coherent lane —</option>
+        </select>
+        <select id="f-dietary">
+          <option value="">Any dietary</option>
+          <option value="V">Vegetarian</option>
+          <option value="VG">Vegan</option>
+          <option value="GF">Gluten-free</option>
+          <option value="DF">Dairy-free</option>
+        </select>
+        <label id="pantry-filter-row" style="display:none;align-items:center;gap:8px;padding:6px 10px;background:var(--green-soft);border-radius:var(--r-sm);border:1px solid #c0dcc8;cursor:pointer">
+          <input type="checkbox" id="f-pantry" onchange="shuffle()" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer">
+          <span style="font-size:12px;font-weight:600;color:var(--green)">Only pantry ingredients</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Goals -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Nutrition Goals</div>
+      <div class="ctrl-group">
+        <select id="g-cal" onchange="updateGoals()">
+          <option value="">No calorie target</option>
+          <option value="400">400 cal target</option>
+          <option value="600">600 cal target</option>
+          <option value="800">800 cal target</option>
+          <option value="1000">1000 cal target</option>
+        </select>
+        <select id="g-pro" onchange="updateGoals()">
+          <option value="">No protein target</option>
+          <option value="30">30g protein</option>
+          <option value="40">40g protein</option>
+          <option value="50">50g protein</option>
+          <option value="60">60g protein</option>
+        </select>
+        <div id="goal-bars" class="goal-wrap" style="display:none">
+          <div class="goal-row">
+            <div class="goal-label"><span>Calories</span><span id="gl-cal-val"></span></div>
+            <div class="goal-bar-bg"><div class="goal-bar-fill" id="gl-cal" style="background:var(--amber)"></div></div>
+          </div>
+          <div class="goal-row">
+            <div class="goal-label"><span>Protein</span><span id="gl-pro-val"></span></div>
+            <div class="goal-bar-bg"><div class="goal-bar-fill" id="gl-pro" style="background:var(--green)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save / Log -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Save & Log</div>
+      <div class="ctrl-row">
+        <button class="btn btn-accent btn-sm" onclick="saveMeal()" style="flex:1">★ Save</button>
+        <button class="btn btn-green btn-sm" onclick="logMeal()" style="flex:1">✓ Log</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()" title="Print">⎙</button>
+      </div>
+    </div>
+
+    <!-- Side info panel -->
+    <div class="sidebar-info" id="side-info">
+      <div class="info-section">
+        <div class="info-section-title">Reheat Sequence</div>
+        <div id="reheat-seq-container"></div>
+      </div>
+      <div class="info-section" id="shared-ings-wrap" style="display:none">
+        <div class="info-section-title">Shared Ingredients</div>
+        <div id="shared-ings-content"></div>
+      </div>
+    </div>
+  </aside>
+  </div><!-- /filter-sheet -->
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- Totals -->
+    <div class="totals-bar" id="totals-bar">
+      <div class="total-cell"><div class="total-val" id="t-cal">—</div><div class="total-lbl">Calories</div></div>
+      <div class="total-cell"><div class="total-val" id="t-pro">—</div><div class="total-lbl">Protein</div></div>
+      <div class="total-cell"><div class="total-val" id="t-carbs">—</div><div class="total-lbl">Carbs</div></div>
+      <div class="total-cell"><div class="total-val" id="t-fat">—</div><div class="total-lbl">Fat</div></div>
+      <div class="total-cell"><div class="total-val" id="t-cost">—</div><div class="total-lbl">Cost</div></div>
+      <div class="total-cell"><div class="total-val" id="t-prep">—</div><div class="total-lbl">Active prep</div></div>
+      <div class="total-cell" style="flex:2">
+        <div class="total-cuisine" id="t-cuisine">—</div>
+        <div class="total-warn" id="t-warn" style="display:none">⚠ Reheat conflict — check sequence</div>
+        <div class="total-lbl">Cuisine lane</div>
+      </div>
+    </div>
+
+    <!-- Brick grid -->
+    <div class="brick-grid" id="brick-grid"></div>
+  </main>
+</div>
+
+<!-- ══════════ WEEKLY PLANNER ══════════ -->
+<div id="page-weekly" style="display:none">
+  <div class="page-wrap">
+    <div class="page-title">Week Planner</div>
+    <div class="page-controls">
+      <button class="btn btn-primary" onclick="generateWeek()">⟳ Generate Week</button>
+      <select id="wk-mode">
+        <option value="bowl">Bowl</option>
+        <option value="soup">Soup Meal</option>
+        <option value="noodle">Noodle Bowl</option>
+        <option value="comfort">Comfort</option>
+        <option value="mixed">Mixed</option>
+      </select>
+      <select id="wk-diet">
+        <option value="">Any dietary</option>
+        <option value="V">Vegetarian</option>
+        <option value="VG">Vegan</option>
+        <option value="GF">Gluten-free</option>
+        <option value="DF">Dairy-free</option>
+      </select>
+      <button class="btn btn-ghost" onclick="toggleShoppingList()">📋 Shopping List</button>
+    </div>
+    <div id="week-grid" class="week-grid"></div>
+    <div id="shopping-wrap" style="display:none;margin-top:20px">
+      <div class="page-title" style="font-size:20px;margin-bottom:12px">Shopping List</div>
+      <div id="shopping-list" class="shop-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HISTORY ══════════ -->
+<div id="page-history" style="display:none">
+  <div class="page-wrap">
+    <div class="page-title">Meal History</div>
+    <div class="page-controls">
+      <button class="btn btn-ghost btn-sm" onclick="clearHistory()">Clear all</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- ══════════ FAVORITES ══════════ -->
+<div id="page-favorites" style="display:none">
+  <div class="page-wrap">
+    <div class="page-title">Saved Meals</div>
+    <div id="fav-list"></div>
+  </div>
+</div>
+
+<!-- ══════════ PANTRY ══════════ -->
+<div id="page-pantry" style="display:none">
+  <div class="page-wrap pantry-wrap">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+      <div>
+        <div class="page-title" style="margin-bottom:4px">My Pantry</div>
+        <div style="font-size:13px;color:#888">Check off what you have. The builder will only suggest items you can make.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div style="font-size:12px;color:#888;font-family:var(--font-head)"><b id="pantry-matched">0</b> / 290 items fully matchable</div>
+        <button class="btn btn-ghost btn-sm" onclick="selectAllPantry()">Select all</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearPantry()">Clear all</button>
+        <button class="btn btn-primary btn-sm" onclick="showTab('builder');$('f-pantry').checked=true;shuffle()">→ Build with pantry</button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input type="text" id="pantry-search" placeholder="Search ingredients…" oninput="renderPantry()" style="flex:1;padding:9px 14px;font-size:13px;border:1.5px solid var(--warm);border-radius:var(--r-sm);background:white;color:var(--ink);outline:none;font-family:var(--font-body)">
+      <select id="pantry-group-filter" onchange="renderPantry()" style="width:160px">
+        <option value="">All groups</option>
+        <option value="proteins">🥩 Proteins</option>
+        <option value="produce">🥦 Produce & Veg</option>
+        <option value="dairy">🧀 Dairy & Eggs</option>
+        <option value="pantry_staples">🫙 Pantry Staples</option>
+        <option value="spices">🌶️ Spices & Herbs</option>
+        <option value="sauces">🍅 Sauces & Condiments</option>
+        <option value="grains">🌾 Grains & Pasta</option>
+        <option value="liquids">🫗 Oils, Liquids & Wine</option>
+      </select>
+    </div>
+
+    <!-- Match preview banner -->
+    <div id="pantry-match-banner" style="display:none;background:#e4f0e8;border:1px solid #c0dcc8;border-radius:var(--r);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="font-size:13px;font-weight:600;color:var(--green)">✓ Pantry filter active — <span id="banner-count">0</span> ingredients selected</div>
+      <button class="btn btn-green btn-sm" onclick="showTab('builder');$('f-pantry').checked=true;shuffle()">Build meals now →</button>
+    </div>
+
+    <!-- Ingredient grid -->
+    <div id="pantry-grid" class="pantry-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ SPOTLIGHT ══════════ -->
+<div id="page-spotlight" style="display:none">
+  <div class="page-wrap spotlight-wrap">
+    <div class="page-title">Ingredient Spotlight</div>
+    <div class="spotlight-search-bar">
+      <input type="text" id="spot-q" placeholder="Search ingredient, cuisine, or category…" oninput="doSpotlight()">
+      <select id="spot-cat" onchange="doSpotlight()">
+        <option value="">All categories</option>
+      </select>
+    </div>
+    <div id="spot-results" class="spotlight-grid"></div>
+    <div id="spot-detail"></div>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+<div class="modal-bg" id="modal-rate">
+  <div class="modal">
+    <div class="modal-title">Rate This Meal</div>
+    <div class="modal-sub" id="rate-sub">—</div>
+    <div class="modal-stars" id="rate-stars">
+      <span class="modal-star" data-v="1">★</span><span class="modal-star" data-v="2">★</span>
+      <span class="modal-star" data-v="3">★</span><span class="modal-star" data-v="4">★</span>
+      <span class="modal-star" data-v="5">★</span>
+    </div>
+    <textarea id="rate-notes" placeholder="Notes…"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-rate')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRate()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-save">
+  <div class="modal">
+    <div class="modal-title">Save Meal</div>
+    <div class="modal-sub">Give this combination a name</div>
+    <input type="text" class="modal-inp" id="save-name" placeholder="e.g. Tuesday Mex Bowl…" maxlength="40">
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-save')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const RAW_ARR=[[1,"Proteins","\ud83e\udd69 Ground beef 80/20 (browned)",9.0,8.5,9.0,"Microwave/Skillet",20,16,230,22.0,0.0,15.0,8,0,"1/2 cup","Onion, garlic","American, Mexican, Italian","GF, DF",1.8,""],[2,"Proteins","\ud83e\udd69 Ground beef 90/10 (browned)",8.5,8.0,8.5,"Microwave/Skillet",20,16,185,24.0,0.0,9.0,8,0,"1/2 cup","Onion, garlic","American, Mexican, Italian","GF, DF",2.1,""],[3,"Proteins","\ud83e\udd69 Birria beef (braised, guajillo)",9.5,9.5,9.5,"Microwave/Skillet",30,12,260,27.0,3.0,15.0,15,240,"1/2 cup","Guajillo, onion, garlic, cumin, tomato","Mexican","GF, DF",2.2,""],[4,"Proteins","\ud83e\udd69 Beef short rib (Korean-braised)",9.5,9.5,9.5,"Microwave/Skillet",30,12,340,28.0,2.0,25.0,15,240,"1/2 cup","Soy sauce, garlic, ginger, pear, onion","Korean, American","GF, DF",4.0,""],[5,"Proteins","\ud83e\udd69 Pot roast (chuck, braised)",9.5,9.5,9.5,"Microwave/Skillet",30,12,280,28.0,4.0,16.0,15,240,"1/2 cup","Onion, garlic, carrot, thyme, beef broth","American","GF, DF",2.5,""],[6,"Proteins","\ud83e\udd69 Sliced flank steak (marinated)",7.0,6.5,7.0,"Skillet only",30,12,210,26.0,2.0,11.0,15,20,"1/2 cup","Garlic, soy, lime, cumin","American, Mexican, Asian","GF, DF",3.0,""],[7,"Proteins","\ud83e\udd69 Beef meatballs",9.0,9.0,9.0,"Microwave/Oven",25,12,240,18.0,8.0,15.0,20,25,"1/2 cup","Onion, garlic, parmesan, breadcrumbs, egg","Italian, American","",2.2,""],[8,"Proteins","\ud83e\udd69 Beef stew chunks (braised)",9.5,9.5,9.5,"Microwave",30,14,270,28.0,5.0,14.0,15,120,"1/2 cup","Onion, carrot, celery, thyme, beef broth","American, French","GF, DF",2.8,""],[9,"Proteins","\ud83c\udf2e Carnitas (pork shoulder, braised)",9.5,9.0,9.5,"Microwave/Skillet",30,12,200,20.0,1.0,12.0,15,480,"1 cup","Onion, garlic, orange, cumin, oregano","Mexican","GF, DF",1.8,""],[10,"Proteins","\ud83d\udc37 Pulled pork (shoulder, smoked)",9.5,9.0,9.5,"Microwave/Skillet",30,12,220,22.0,2.0,12.0,15,480,"1 cup","Onion, garlic, paprika, cider vinegar","American, Mexican","GF, DF",1.8,""],[11,"Proteins","\ud83d\udc37 Ground pork (seasoned)",8.5,8.0,8.5,"Microwave/Skillet",20,12,220,18.0,1.0,16.0,8,15,"1/2 cup","Onion, garlic, ginger, scallion","Asian, Italian, American","GF, DF",1.6,""],[12,"Proteins","\ud83c\udf36\ufe0f Chorizo (Mexican, crumbled)",9.0,9.0,9.0,"Microwave/Skillet",20,12,250,14.0,2.0,20.0,10,15,"1/2 cup","Onion, garlic, chile, vinegar","Mexican, Spanish","GF, DF",1.5,""],[13,"Proteins","\ud83c\udf56 Italian sausage (crumbled, sweet)",8.5,8.5,8.5,"Microwave/Skillet",20,12,260,16.0,2.0,20.0,10,20,"1/2 cup","Fennel, garlic, onion","Italian, American","GF, DF",1.7,""],[14,"Proteins","\ud83c\udf56 Italian sausage (crumbled, hot)",8.5,8.5,8.5,"Microwave/Skillet",20,12,255,16.0,2.0,20.0,10,20,"1/2 cup","Fennel, garlic, chile, onion","Italian","GF, DF",1.7,""],[15,"Proteins","\ud83e\udd53 Bacon bits (rendered)",8.0,8.0,8.0,"Microwave",10,16,130,9.0,0.0,10.0,5,15,"1/4 cup","None","American","GF, DF",1.0,""],[16,"Proteins","\ud83e\udd53 Pancetta / guanciale (cubed)",8.5,8.5,8.5,"Skillet only",20,12,200,10.0,0.0,18.0,5,10,"1/4 cup","None","Italian","GF, DF",1.5,""],[17,"Proteins","\ud83c\udf57 Chicken thighs (braised, bone-in)",9.5,9.5,9.5,"Microwave/Skillet",25,12,240,28.0,1.0,14.0,10,45,"1/2 cup","Garlic, olive oil, thyme, lemon","French, Mediterranean, American","GF, DF",1.8,""],[18,"Proteins","\ud83c\udf57 Chicken thighs (shredded, plain)",9.0,9.0,9.0,"Microwave/Skillet",20,12,200,26.0,0.0,10.0,10,40,"1/2 cup","Salt, pepper, garlic","American, Mexican, Asian","GF, DF",1.6,""],[19,"Proteins","\ud83e\uded4 Chipotle chicken (shredded)",9.0,8.5,9.0,"Microwave/Skillet",20,12,185,28.0,3.0,7.0,10,25,"1/2 cup","Chipotle, garlic, onion, lime","Mexican","GF, DF",1.6,""],[20,"Proteins","\ud83c\udf57 Grilled chicken breast (plain)",6.0,5.5,6.0,"Microwave",20,12,165,31.0,0.0,3.0,10,25,"1/2 cup","Garlic, oil, salt","American, Mediterranean","GF, DF",1.5,""],[21,"Proteins","\ud83c\udf57 Shredded rotisserie chicken",7.5,7.0,7.5,"Microwave",20,12,170,28.0,0.0,7.0,0,0,"1/2 cup","Pre-seasoned","American, Mexican, Asian","GF, DF",1.2,""],[22,"Proteins","\ud83e\udd86 Duck confit portions",9.0,9.0,9.0,"Skillet",30,12,310,24.0,0.0,24.0,10,120,"1/2 cup","Garlic, thyme, duck fat, bay leaf","French","GF, DF",4.0,""],[23,"Proteins","\ud83e\udd83 Ground turkey (browned)",8.5,8.0,8.5,"Microwave/Skillet",20,16,180,22.0,1.0,8.0,10,20,"1/2 cup","Onion, garlic","American, Mexican, Italian","GF, DF",1.6,""],[24,"Proteins","\ud83e\udd83 Turkey meatballs",8.5,8.5,8.5,"Microwave/Oven",25,12,195,19.0,7.0,10.0,20,25,"1/2 cup","Garlic, onion, parsley, egg","Italian, American","",1.8,""],[25,"Proteins","\ud83e\udd90 Shrimp (cooked, peeled)",9.0,8.5,9.0,"Microwave/Skillet",15,8,100,19.0,1.0,1.0,5,10,"1/2 cup","Garlic, butter/oil, lemon","Asian, Mediterranean, Cajun","GF, DF",2.5,""],[26,"Proteins","\ud83e\udd90 Shrimp (garlic butter)",9.0,9.0,9.0,"Microwave/Skillet",15,8,130,19.0,1.0,6.0,5,10,"1/2 cup","Butter, garlic, parsley, lemon","American, Italian","GF",2.8,""],[27,"Proteins","\ud83d\udc1f Salmon fillet (plain, portioned)",7.5,7.0,8.0,"Microwave (low)",30,8,200,25.0,0.0,11.0,15,20,"1/2 cup","Salt, pepper, olive oil","Mediterranean, Asian","GF, DF",3.5,""],[28,"Proteins","\ud83d\udc1f Miso-glazed cod",7.5,7.0,8.0,"Microwave (low)",30,8,130,22.0,5.0,2.0,10,15,"1/2 cup","Miso, mirin, sake, sugar","Asian","GF, DF",3.0,""],[29,"Proteins","\ud83d\udc21 White fish \u2014 tilapia fillet",6.0,5.5,6.0,"Microwave (low)",30,8,100,21.0,0.0,1.0,10,20,"1/2 cup","Lemon, garlic, butter","Mediterranean, American","GF, DF",1.8,""],[30,"Proteins","\ud83d\udc21 White fish \u2014 cod fillet",6.5,6.0,6.5,"Microwave (low)",30,8,105,23.0,0.0,1.0,10,20,"1/2 cup","Lemon, garlic, butter","Mediterranean, American","GF, DF",2.2,""],[31,"Proteins","\ud83d\udc1f Tuna steaks (seared, portioned)",7.0,6.5,7.0,"Microwave (low)",30,12,150,30.0,0.0,2.0,10,10,"1/2 cup","Soy sauce, sesame, ginger","Asian, Mediterranean","GF, DF",3.5,""],[32,"Proteins","\ud83d\udc19 Octopus (braised/grilled)",8.5,8.0,8.5,"Skillet only",30,8,140,25.0,3.0,2.0,15,60,"1/2 cup","Olive oil, garlic, lemon, paprika","Mediterranean, Spanish","GF, DF",4.0,""],[33,"Proteins","\ud83e\udd91 Calamari (braised in tomato)",8.5,8.5,8.5,"Microwave/Stovetop",20,8,130,18.0,6.0,4.0,15,40,"1/2 cup","Tomato, garlic, white wine, parsley","Italian, Mediterranean","GF, DF",3.0,""],[34,"Proteins","\ud83e\udd80 Crab cake portions (mini)",7.0,6.5,7.0,"Oven/Skillet",30,8,180,14.0,9.0,9.0,25,15,"1/2 cup","Celery, onion, mayo, Old Bay, breadcrumb","American","",3.5,""],[35,"Proteins","\ud83e\uded8 Black beans (cooked)",8.5,8.5,8.5,"Microwave",15,10,110,7.0,20.0,0.0,5,45,"1/2 cup","Garlic, cumin, onion","Mexican, American, Caribbean","V, VG, GF, DF",0.35,""],[36,"Proteins","\ud83e\uded8 Pinto beans (cooked)",8.0,8.0,8.0,"Microwave",15,10,110,7.0,20.0,0.0,5,45,"1/2 cup","Onion, garlic, cumin, lard","Mexican, American","V, VG, GF, DF",0.35,""],[37,"Proteins","\ud83e\uded8 Kidney beans (cooked)",8.0,8.0,8.0,"Microwave",15,10,110,7.0,20.0,0.0,5,45,"1/2 cup","Onion, garlic, cumin","American, Mexican, Indian","V, VG, GF, DF",0.35,""],[38,"Proteins","\ud83e\uded8 Chickpeas (cooked or roasted)",8.5,8.5,8.5,"Microwave",15,10,130,7.0,22.0,2.0,5,30,"1/2 cup","Garlic, olive oil, lemon","Mediterranean, Indian, Middle Eastern","V, VG, GF, DF",0.4,""],[39,"Proteins","\ud83e\uded8 White beans \u2014 cannellini (cooked)",8.0,8.0,8.0,"Microwave",15,10,120,8.0,22.0,0.0,5,45,"1/2 cup","Garlic, olive oil, rosemary","Italian, Mediterranean","V, VG, GF, DF",0.35,""],[40,"Proteins","\ud83e\uded8 Navy beans (cooked)",8.0,8.0,8.0,"Microwave",15,10,130,8.0,24.0,1.0,5,45,"1/2 cup","Onion, garlic, bay leaf","American","V, VG, GF, DF",0.3,""],[41,"Proteins","\ud83e\uded8 Lentils \u2014 green/brown (cooked)",8.5,8.5,8.5,"Microwave",15,10,115,9.0,20.0,0.0,10,40,"1/2 cup","Onion, garlic, carrot, bay leaf","Mediterranean, Indian, American","V, VG, GF, DF",0.4,""],[42,"Proteins","\ud83e\uded8 Lentils \u2014 red (cooked)",8.5,8.5,8.5,"Microwave",15,10,110,9.0,19.0,0.0,10,25,"1/2 cup","Onion, garlic, turmeric, cumin","Indian, Mediterranean","V, VG, GF, DF",0.4,""],[43,"Proteins","\ud83e\uded8 Edamame (shelled)",7.5,7.5,7.5,"Microwave",10,16,120,11.0,9.0,5.0,5,10,"1/2 cup","Salt, sesame oil","Asian","V, VG, GF, DF",0.8,""],[44,"Proteins","\ud83c\udf31 Tofu (baked or pan-seared)",7.5,7.0,7.5,"Microwave/Skillet",15,12,80,9.0,2.0,4.0,10,25,"1/2 cup","Soy sauce, garlic, ginger, sesame","Asian, Mediterranean","V, VG, GF, DF",0.7,""],[45,"Proteins","\ud83c\udf31 Tofu \u2014 silken (for creamy dishes)",6.5,6.0,6.5,"Microwave",15,8,60,6.0,2.0,3.0,5,0,"1/2 cup","Miso, soy, sesame","Asian","V, VG, GF, DF",0.8,""],[46,"Proteins","\ud83c\udf31 Tempeh (crumbled or sliced)",7.0,7.0,7.0,"Microwave/Skillet",15,16,160,15.0,8.0,9.0,10,25,"1/2 cup","Soy sauce, garlic, ginger, smoked paprika","Asian, American","V, VG, DF",1.0,""],[47,"Proteins","\ud83c\udf31 Seitan strips (homemade or store)",7.0,6.5,7.0,"Microwave/Skillet",15,12,130,25.0,5.0,2.0,10,20,"1/2 cup","Soy sauce, garlic, smoked paprika","American, Asian","V, VG, DF",1.0,""],[48,"Proteins","\ud83e\udd5a Hard-boiled eggs (halved)",4.5,4.0,4.5,"Room temp only",60,2,70,6.0,0.0,5.0,5,15,"1/2 cup","None","American","GF, V, DF",0.3,"Do not freeze \u2014 refrigerate only up to 1 wk"],[49,"Proteins","\ud83c\udf73 Scrambled egg bites",5.5,5.0,5.5,"Microwave",15,4,120,9.0,1.0,8.0,10,8,"1/2 cup","Cheese, veggies","American","GF, V",0.6,""],[50,"Proteins","\ud83e\udd5a Soft-boiled marinated eggs (ramen-style)",7.0,6.5,7.5,"Room temp only",60,2,90,8.0,1.0,6.0,5,10,"1/2 cup","Soy, mirin, garlic, sugar","Asian","GF, DF",0.4,"Do not freeze \u2014 refrigerate up to 5 days"],[51,"Proteins","\ud83d\udc11 Ground lamb (spiced)",8.5,8.5,8.5,"Microwave/Skillet",20,12,240,22.0,3.0,16.0,10,20,"1/2 cup","Onion, garlic, cumin, cinnamon, coriander","Mediterranean, Indian, Middle Eastern","GF, DF",2.5,""],[52,"Proteins","\ud83d\udc11 Lamb shoulder (braised)",9.5,9.5,9.5,"Microwave/Skillet",30,12,280,26.0,2.0,18.0,15,180,"1/2 cup","Onion, garlic, rosemary, red wine, tomato","Mediterranean, French","GF, DF",3.5,""],[53,"Vegetables","\ud83e\uddc5 Caramelized onions",9.5,9.5,9.5,"Microwave/Skillet",10,16,90,1.0,12.0,4.0,5,60,"1/4 cup","Butter/oil, thyme","French, Italian, American","V, VG, GF, DF",0.3,""],[54,"Vegetables","\ud83e\uddc5 Roasted cipollini onions",9.0,9.0,9.0,"Microwave",15,12,80,2.0,16.0,3.0,5,35,"1/4 cup","Balsamic, olive oil, thyme","Italian, American","V, VG, GF, DF",0.9,""],[55,"Vegetables","\ud83e\uddc4 Roasted garlic (whole heads)",9.5,9.5,9.5,"Microwave",10,16,60,2.0,12.0,0.0,5,40,"1/4 cup","Olive oil, salt","French, Italian, Mediterranean","V, VG, GF, DF",0.3,""],[56,"Vegetables","\ud83c\udf3f Braised leeks",8.5,8.5,8.5,"Microwave",15,8,60,2.0,12.0,2.0,5,30,"1/2 cup","Olive oil, thyme, parmesan","French, Mediterranean","V, GF",0.7,""],[57,"Vegetables","\ud83e\uddc5 Roasted shallots",9.0,9.0,9.0,"Microwave",15,12,70,2.0,14.0,3.0,5,30,"1/4 cup","Olive oil, balsamic, thyme","French, Mediterranean, Italian","V, VG, GF, DF",0.6,""],[58,"Vegetables","\ud83c\udf3f Scallion oil (Chinese-style)",8.5,8.5,8.5,"Room temp",5,12,80,0.0,1.0,9.0,5,5,"2 tbsp","Scallion, neutral oil, salt","Asian","V, VG, GF, DF",0.25,""],[59,"Vegetables","\ud83e\udd66 Roasted broccoli",7.5,7.0,7.5,"Microwave",15,16,65,4.0,11.0,3.0,5,20,"1/2 cup","Olive oil, garlic, lemon","American, Mediterranean, Asian","V, VG, GF, DF",0.5,""],[60,"Vegetables","\ud83e\udd66 Roasted cauliflower",8.0,8.0,8.0,"Microwave",15,16,70,3.0,13.0,3.0,5,25,"1/2 cup","Olive oil, turmeric, garlic","Mediterranean, Indian, American","V, VG, GF, DF",0.6,""],[61,"Vegetables","\ud83e\udd66 Roasted Brussels sprouts",8.0,7.5,8.0,"Microwave/Oven",15,16,80,3.0,10.0,4.0,5,25,"1/2 cup","Olive oil, garlic, balsamic","American, Mediterranean","V, VG, GF, DF",0.7,""],[62,"Vegetables","\ud83e\udd66 Garlicky broccoli rabe (rapini)",7.5,7.0,7.5,"Microwave/Skillet",10,8,45,3.0,5.0,3.0,5,10,"1/4 cup","Garlic, olive oil, chili flakes","Italian","V, VG, GF, DF",0.8,""],[63,"Vegetables","\ud83c\udf3f Roasted broccolini with lemon",8.0,7.5,8.0,"Microwave",15,8,50,4.0,7.0,2.0,5,15,"1/2 cup","Olive oil, lemon zest, garlic, chili","Italian, American","V, VG, GF, DF",1.1,""],[64,"Vegetables","\ud83e\udd6c Saut\u00e9ed kale",7.0,7.0,7.0,"Microwave",10,12,55,4.0,7.0,3.0,5,15,"1/4 cup","Garlic, olive oil, lemon","American, Mediterranean","V, VG, GF, DF",0.6,""],[65,"Vegetables","\ud83e\udd6c Saut\u00e9ed spinach",7.5,7.0,7.5,"Microwave",10,12,40,4.0,4.0,2.0,5,10,"1/4 cup","Garlic, olive oil, lemon","Mediterranean, Italian, Asian","V, VG, GF, DF",0.5,""],[66,"Vegetables","\ud83e\udd6c Saut\u00e9ed Swiss chard",7.5,7.0,7.5,"Microwave",10,12,35,3.0,7.0,1.0,5,10,"1/4 cup","Garlic, olive oil, lemon, pine nuts","Italian, Mediterranean","V, VG, GF, DF",0.7,""],[67,"Vegetables","\ud83e\udd6c Saut\u00e9ed collard greens (Southern)",8.5,8.5,8.5,"Microwave",15,12,60,4.0,9.0,2.0,10,60,"1/4 cup","Bacon/smoked turkey, garlic, onion, cider vinegar","American (Southern)","GF, DF",0.6,""],[68,"Vegetables","\ud83e\udd6c Braised bok choy halves",8.0,7.5,8.0,"Microwave/Skillet",10,6,30,2.0,4.0,1.0,5,10,"1/2 cup","Garlic, soy sauce, sesame oil, ginger","Asian","V, VG, GF, DF",0.6,""],[69,"Vegetables","\ud83e\udd6c Baby bok choy in oyster sauce",8.5,8.0,8.5,"Microwave/Skillet",10,6,45,3.0,5.0,2.0,5,10,"1/2 cup","Oyster sauce, garlic, sesame oil","Asian","V, GF",0.7,""],[70,"Vegetables","\ud83e\udd6c Gai lan (Chinese broccoli)",8.0,7.5,8.0,"Microwave/Skillet",10,6,40,3.0,5.0,2.0,5,10,"1/2 cup","Garlic, oyster sauce, sesame oil","Asian","V, GF",0.8,""],[71,"Vegetables","\ud83e\udd6c Saut\u00e9ed napa cabbage",7.5,7.0,7.5,"Microwave/Skillet",10,6,35,2.0,5.0,1.0,5,10,"1/2 cup","Garlic, soy sauce, sesame oil, ginger","Asian","V, VG, GF, DF",0.4,""],[72,"Vegetables","\ud83e\udd6c Roasted savoy cabbage wedges",7.5,7.0,7.5,"Microwave",15,8,45,2.0,8.0,2.0,5,25,"1/2 cup","Olive oil, caraway, garlic","Eastern European, American","V, VG, GF, DF",0.4,""],[73,"Vegetables","\ud83e\udd6c Wilted watercress",7.0,6.5,7.0,"Microwave/Skillet",10,4,25,2.0,3.0,1.0,5,5,"1/4 cup","Garlic, olive oil, lemon","Mediterranean, Asian","V, VG, GF, DF",0.8,""],[74,"Vegetables","\ud83e\udd55 Roasted carrots",8.5,8.5,8.5,"Microwave",15,20,70,1.0,16.0,3.0,5,30,"1/2 cup","Olive oil, honey, herbs","American, Mediterranean","V, VG, GF, DF",0.4,""],[75,"Vegetables","\ud83e\udd55 Roasted rainbow carrots",8.5,8.5,8.5,"Microwave",15,12,75,1.0,17.0,3.0,5,30,"1/2 cup","Olive oil, honey, cumin, coriander","Mediterranean, American","V, GF",0.5,""],[76,"Vegetables","\ud83e\udd55 Glazed parsnips",8.0,8.0,8.0,"Microwave",15,12,90,1.0,18.0,3.0,5,30,"1/2 cup","Butter, honey, thyme","British, American","V, GF",0.5,""],[77,"Vegetables","\ud83e\udd55 Roasted turnips",7.5,7.5,7.5,"Microwave",15,12,45,2.0,10.0,2.0,5,25,"1/2 cup","Olive oil, garlic, thyme","American, French","V, VG, GF, DF",0.4,""],[78,"Vegetables","\ud83e\udd55 Roasted rutabaga",7.5,7.5,7.5,"Microwave",15,12,50,2.0,12.0,2.0,5,30,"1/2 cup","Butter, brown sugar, thyme","American","V, GF",0.4,""],[79,"Vegetables","\ud83e\udeda Roasted beets (red)",8.5,8.5,8.5,"Microwave",15,16,75,3.0,17.0,0.0,10,60,"1/2 cup","Olive oil, balsamic, thyme","Mediterranean, American","V, VG, GF, DF",0.7,""],[80,"Vegetables","\ud83e\udeda Roasted golden beets",8.5,8.5,8.5,"Microwave",15,16,70,3.0,16.0,0.0,10,60,"1/2 cup","Olive oil, orange zest, thyme","Mediterranean","V, VG, GF, DF",0.8,""],[81,"Vegetables","\ud83e\uddc4 Roasted garlic cloves (spreadable)",9.5,9.5,9.5,"Microwave",10,16,60,2.0,12.0,0.0,5,40,"1/4 cup","Olive oil, salt","French, Italian, Mediterranean","V, VG, GF, DF",0.3,""],[82,"Vegetables","\ud83c\udf60 Roasted sweet potato cubes",8.0,8.0,8.0,"Microwave",20,12,130,2.0,30.0,0.0,5,30,"1/2 cup","Olive oil, cinnamon, paprika","American, Mediterranean","V, VG, GF, DF",0.5,""],[83,"Vegetables","\ud83c\udf60 Mashed sweet potato (spiced)",9.0,9.0,9.0,"Microwave",20,10,160,3.0,34.0,4.0,5,25,"1/2 cup","Butter, cinnamon, maple syrup","American","V, GF",0.5,""],[84,"Vegetables","\ud83c\udf60 Roasted delicata squash rings",8.5,8.5,8.5,"Microwave/Oven",15,10,100,2.0,22.0,2.0,5,25,"1/2 cup","Olive oil, maple, cinnamon","American","V, VG, GF, DF",0.7,""],[85,"Vegetables","\ud83c\udf83 Roasted butternut squash cubes",8.5,8.5,8.5,"Microwave",15,12,120,2.0,26.0,2.0,5,30,"1/2 cup","Olive oil, nutmeg, sage","American, Italian","V, VG, GF, DF",0.6,""],[86,"Vegetables","\ud83c\udf83 Roasted acorn squash halves",8.5,8.5,8.5,"Microwave/Oven",20,12,115,2.0,24.0,2.0,10,40,"1/2 cup","Butter, brown sugar, cinnamon","American","V, GF",0.6,""],[87,"Vegetables","\ud83e\udd52 Roasted zucchini",7.0,6.0,7.0,"Microwave",15,4,40,3.0,7.0,2.0,5,20,"1/2 cup","Olive oil, garlic, parmesan","Italian, Mediterranean","V, VG, GF, DF",0.5,""],[88,"Vegetables","\ud83e\udd52 Roasted yellow squash",7.0,6.0,7.0,"Microwave",15,4,40,3.0,7.0,2.0,5,20,"1/2 cup","Olive oil, garlic, herbs","Italian, American","V, VG, GF, DF",0.5,""],[89,"Vegetables","\ud83e\uded1 Roasted bell peppers (mixed)",8.5,8.0,8.5,"Microwave",10,16,45,1.0,9.0,2.0,5,25,"1/2 cup","Olive oil, garlic","Mediterranean, Mexican, Italian","V, VG, GF, DF",0.6,""],[90,"Vegetables","\ud83c\udf36\ufe0f Roasted poblano strips",8.5,8.5,8.5,"Microwave",10,12,30,1.0,6.0,1.0,5,20,"1/4 cup","Olive oil, garlic","Mexican","V, VG, GF, DF",0.6,""],[91,"Vegetables","\ud83c\udf46 Roasted eggplant cubes",8.5,8.0,8.5,"Microwave",15,10,55,2.0,10.0,2.0,5,25,"1/2 cup","Olive oil, garlic, herbs","Mediterranean, Middle Eastern","V, VG, GF, DF",0.6,""],[92,"Vegetables","\ud83c\udf46 Ratatouille (stewed eggplant, zucchini, tomato)",9.0,9.0,9.0,"Microwave",15,12,100,3.0,15.0,5.0,20,60,"1/2 cup","Tomato, onion, garlic, zucchini, herbs","French, Mediterranean","V, VG, GF, DF",0.8,""],[93,"Vegetables","\ud83c\udf46 Baba ganoush (roasted eggplant pur\u00e9e)",9.0,9.0,9.0,"Room temp/Micro",15,8,80,2.0,8.0,6.0,10,30,"1/4 cup","Eggplant, tahini, garlic, lemon, cumin","Middle Eastern, Mediterranean","V, VG, GF, DF",0.7,""],[94,"Vegetables","\ud83c\udf45 Stewed tomatoes",9.0,9.0,9.0,"Microwave",10,16,50,2.0,10.0,0.0,5,30,"1/4 cup","Garlic, onion, basil, herbs","Italian, Mediterranean","V, VG, GF, DF",0.4,""],[95,"Vegetables","\ud83e\udd51 Roasted tomatillos",8.5,8.5,8.5,"Microwave",10,10,40,1.0,8.0,1.0,5,20,"1/4 cup","Garlic, onion, cilantro","Mexican","V, VG, GF, DF",0.5,""],[96,"Vegetables","\ud83c\udf44 Saut\u00e9ed cremini mushrooms",9.0,9.0,9.0,"Microwave/Skillet",10,16,70,3.0,8.0,4.0,10,15,"1/4 cup","Garlic, butter/oil, thyme","French, Italian, American","V, VG, GF, DF",0.8,""],[97,"Vegetables","\ud83c\udf44 Shiitake & oyster mushroom blend",9.0,9.0,9.0,"Microwave/Skillet",10,12,60,3.0,8.0,3.0,10,15,"1/4 cup","Garlic, soy sauce, sesame oil, thyme","Asian, French, Italian","V, VG, GF, DF",1.2,""],[98,"Vegetables","\ud83c\udf44 King oyster mushrooms (seared)",9.0,9.0,9.0,"Skillet only",15,8,60,3.0,7.0,3.0,5,10,"1/4 cup","Butter, garlic, thyme, soy sauce","Asian, French, Italian","V, VG, GF, DF",1.5,""],[99,"Vegetables","\ud83c\udf44 Portobello mushrooms (grilled/roasted)",8.5,8.0,8.5,"Microwave/Skillet",15,8,50,4.0,7.0,1.0,10,20,"1/2 cup","Garlic, balsamic, olive oil, thyme","American, Italian","V, VG, GF, DF",1.0,""],[100,"Vegetables","\ud83c\udf44 Wild mushroom rag\u00f9",9.5,9.5,9.5,"Microwave/Stovetop",15,12,90,4.0,10.0,5.0,15,30,"1/4 cup","Shallot, garlic, thyme, cream/wine, mixed mushrooms","French, Italian","V, GF",1.5,""],[101,"Vegetables","\ud83c\udf3f Roasted fennel wedges",8.5,8.5,8.5,"Microwave",15,8,55,2.0,10.0,2.0,5,25,"1/2 cup","Olive oil, lemon, parmesan","Italian, Mediterranean","V, GF",0.8,""],[102,"Vegetables","\ud83c\udf3f Roasted asparagus",7.5,7.0,7.5,"Microwave",15,8,40,4.0,6.0,2.0,5,15,"1/2 cup","Olive oil, lemon, garlic","Mediterranean, American","V, VG, GF, DF",1.2,""],[103,"Vegetables","\ud83c\udf3f Roasted artichoke hearts",8.5,8.5,8.5,"Microwave",15,12,75,4.0,13.0,2.0,10,30,"1/2 cup","Olive oil, garlic, lemon, parsley","Italian, Mediterranean","V, VG, GF, DF",1.5,""],[104,"Vegetables","\ud83c\udf3f Herb-roasted leeks",8.5,8.5,8.5,"Microwave",15,8,60,2.0,12.0,2.0,5,30,"1/2 cup","Olive oil, thyme, parmesan, lemon","French, Mediterranean","V, GF",0.7,""],[105,"Vegetables","\ud83c\udf3f Chimichurri-marinated roasted veg",8.5,8.0,8.5,"Room temp/Micro",10,8,80,2.0,10.0,5.0,10,25,"1/2 cup","Peppers, zucchini, parsley, garlic, vinegar","South American","V, VG, GF, DF",0.9,""],[106,"Vegetables","\ud83e\uded1 Peperonata (Italian braised peppers)",9.0,9.0,9.0,"Microwave",15,12,70,1.0,12.0,3.0,5,30,"1/2 cup","Bell peppers, onion, tomato, capers, olive oil","Italian, Mediterranean","V, VG, GF, DF",0.7,""],[107,"Vegetables","\ud83e\uded1 Stuffed pepper filling (no shell)",9.0,8.5,9.0,"Microwave",20,10,180,12.0,18.0,7.0,15,30,"1/2 cup","Rice, beef/turkey, onion, tomato, garlic","American, Mediterranean","GF, DF",1.2,""],[108,"Vegetables","\ud83e\udedb Steamed green beans",6.5,6.0,6.5,"Microwave",15,16,35,2.0,8.0,0.0,5,10,"1/2 cup","Garlic, butter, almonds","American, Mediterranean","V, VG, GF, DF",0.5,""],[109,"Vegetables","\ud83e\udedb Green beans with soy-garlic glaze",7.5,7.0,7.5,"Microwave",10,10,50,2.0,8.0,2.0,5,10,"1/2 cup","Soy sauce, garlic, sesame oil, red pepper","Asian, American","V, VG, GF, DF",0.55,""],[110,"Vegetables","\ud83e\udedb Steamed snap peas",5.5,5.0,5.5,"Microwave",10,8,40,3.0,7.0,0.0,5,8,"1/2 cup","Sesame oil, salt","Asian, American","V, VG, GF, DF",0.7,""],[111,"Vegetables","\ud83e\udedb Edamame (shelled)",7.5,7.5,7.5,"Microwave",10,16,120,11.0,9.0,5.0,5,10,"1/2 cup","Salt, sesame oil","Asian","V, VG, GF, DF",0.8,""],[112,"Vegetables","\ud83c\udf3f English peas (frozen, steamed)",6.5,6.0,6.5,"Microwave",10,16,80,5.0,14.0,0.0,5,8,"1/2 cup","Butter, mint, salt","American, British","V, VG, GF, DF",0.5,""],[113,"Vegetables","\ud83c\udf3d Corn off the cob (plain)",6.5,6.5,6.5,"Microwave",10,16,130,5.0,29.0,2.0,5,10,"1/2 cup","Butter, salt","American, Mexican","V, VG, GF, DF",0.4,""],[114,"Vegetables","\ud83c\udf3d Elotes-style corn (charred, cotija)",9.0,8.5,9.0,"Microwave/Skillet",10,10,160,4.0,28.0,6.0,10,10,"1/2 cup","Butter, cotija, chili, lime, mayo","Mexican","V, GF",0.6,""],[115,"Vegetables","\ud83c\udf3d Roasted corn with miso butter",8.5,8.5,8.5,"Microwave/Skillet",10,8,140,4.0,26.0,5.0,5,15,"1/2 cup","Miso, butter, scallion","Asian, American","V, GF",0.55,""],[116,"Vegetables","\ud83c\udf3d Succotash (corn, lima, peppers)",8.0,8.0,8.0,"Microwave",15,10,160,6.0,28.0,4.0,10,15,"1/2 cup","Corn, lima beans, bell pepper, onion, butter","American","V, GF",0.6,""],[117,"Vegetables","\ud83e\udd54 Roasted diced potatoes (Yukon)",7.0,7.0,7.0,"Microwave/Oven",20,8,160,3.0,34.0,3.0,5,35,"1/2 cup","Olive oil, garlic, rosemary, paprika","American, Mediterranean","V, VG, GF, DF",0.4,""],[118,"Vegetables","\ud83e\udd54 Smashed potatoes (crispy roasted)",8.0,7.5,8.0,"Oven",25,8,170,3.0,36.0,4.0,5,40,"1/2 cup","Olive oil, garlic, herbs, flaky salt","American, British","V, VG, GF, DF",0.4,""],[119,"Vegetables","\ud83e\udd54 Roasted fingerling potatoes",7.5,7.5,7.5,"Microwave/Oven",20,8,155,3.0,33.0,3.0,5,30,"1/2 cup","Olive oil, garlic, rosemary","American, Mediterranean","V, VG, GF, DF",0.7,""],[120,"Vegetables","\ud83e\udd57 Succotash",8.0,8.0,8.0,"Microwave",15,10,160,6.0,28.0,4.0,10,15,"1/2 cup","Corn, lima beans, bell pepper, butter, onion","American","V, GF",0.6,""],[121,"Vegetables","\ud83c\udf3f Wilted watercress with garlic",7.0,6.5,7.0,"Microwave/Skillet",10,4,25,2.0,3.0,1.0,5,5,"1/4 cup","Garlic, olive oil, lemon","Mediterranean, Asian","V, VG, GF, DF",0.8,""],[122,"Starches / Carbs","\ud83c\udf5a White rice (long-grain)",8.5,8.5,8.5,"Microwave",15,12,200,4.0,44.0,0.0,5,20,"1/2 cup","None","Asian, American, Mexican","V, VG, GF, DF",0.2,""],[123,"Starches / Carbs","\ud83c\udf5a Brown rice (long-grain)",8.0,8.0,8.0,"Microwave",15,12,215,5.0,45.0,2.0,5,45,"1/2 cup","None","Asian, American, Mediterranean","V, VG, GF, DF",0.25,""],[124,"Starches / Carbs","\ud83c\udf5a Jasmine rice",8.5,8.5,8.5,"Microwave",15,12,205,4.0,44.0,0.0,5,20,"1/2 cup","None","Asian, Caribbean","V, VG, GF, DF",0.25,""],[125,"Starches / Carbs","\ud83c\udf5a Cilantro lime rice",8.5,8.5,8.5,"Microwave",15,12,210,4.0,46.0,1.0,10,20,"1/2 cup","Lime, cilantro, garlic","Mexican","V, VG, GF, DF",0.3,""],[126,"Starches / Carbs","\ud83c\udf5a Coconut jasmine rice",9.0,9.0,9.0,"Microwave",15,12,240,4.0,48.0,5.0,5,20,"1/2 cup","Jasmine rice, coconut milk, salt","Asian, Caribbean","V, VG, GF, DF",0.4,""],[127,"Starches / Carbs","\ud83c\udf5a Fried rice (egg & veg)",8.0,7.5,8.0,"Microwave/Skillet",15,8,280,7.0,40.0,10.0,15,15,"1/2 cup","Egg, soy sauce, garlic, onion, sesame oil","Asian","V, DF",0.6,""],[128,"Starches / Carbs","\ud83c\udf3d Elote rice (Mexican street corn)",9.0,8.5,9.0,"Microwave",15,10,250,5.0,44.0,7.0,10,20,"1/2 cup","Rice, corn, cotija, chili, lime, mayo","Mexican","V, GF",0.55,""],[129,"Starches / Carbs","\ud83e\uded8 Mujaddara (lentil & rice)",9.0,9.0,9.0,"Microwave",15,12,240,9.0,40.0,6.0,5,30,"1/2 cup","Lentils, rice, caramelized onion, cumin","Middle Eastern, Mediterranean","V, VG, GF, DF",0.5,""],[130,"Starches / Carbs","\ud83c\udf5a Saffron rice",8.5,8.5,8.5,"Microwave",15,12,210,4.0,45.0,1.0,10,20,"1/2 cup","Saffron, onion, broth","Mediterranean, Middle Eastern","V, VG, GF, DF",0.5,""],[131,"Starches / Carbs","\ud83c\udf3e Quinoa (plain)",7.5,7.5,7.5,"Microwave",15,12,220,8.0,39.0,4.0,5,20,"1/2 cup","Broth, garlic","American, Mediterranean","V, VG, GF, DF",0.6,""],[132,"Starches / Carbs","\ud83c\udf3e Farro",7.5,7.5,7.5,"Microwave",15,12,220,8.0,45.0,2.0,5,35,"1/2 cup","Broth, herbs","Mediterranean, American","V, VG, DF",0.55,""],[133,"Starches / Carbs","\ud83c\udf3e Barley (pearled)",7.5,7.5,7.5,"Microwave",15,12,195,4.0,44.0,1.0,5,50,"1/2 cup","Broth, onion","American, Mediterranean","V, VG, DF",0.3,""],[134,"Starches / Carbs","\ud83c\udf3e Freekeh",7.5,7.5,7.5,"Microwave",15,12,200,8.0,40.0,2.0,5,25,"1/2 cup","Broth, onion, herbs","Mediterranean, Middle Eastern","V, VG, DF",0.65,""],[135,"Starches / Carbs","\ud83c\udf3e Wild rice pilaf",8.5,8.5,8.5,"Microwave",15,12,210,7.0,42.0,3.0,5,50,"1/2 cup","Wild rice, broth, onion, celery, herbs","American","V, VG, GF, DF",0.65,""],[136,"Starches / Carbs","\ud83c\udf3e Tabbouleh base (bulgur)",8.0,8.0,8.0,"Room temp",10,6,170,5.0,32.0,4.0,10,15,"1/2 cup","Bulgur, parsley, tomato, cucumber, lemon","Middle Eastern, Mediterranean","V, VG",0.45,""],[137,"Starches / Carbs","\ud83c\udf3e Congee (rice porridge base)",9.0,9.0,9.0,"Microwave/Stovetop",20,10,160,5.0,34.0,1.0,5,60,"1 cup","Rice, broth, ginger, garlic","Asian","V, VG, GF, DF",0.3,""],[138,"Starches / Carbs","\ud83c\udf3e Couscous (plain)",8.5,8.5,8.5,"Microwave",15,12,175,6.0,36.0,0.0,5,10,"1/2 cup","Olive oil, herbs","Mediterranean, North African","V, VG, DF",0.3,""],[139,"Starches / Carbs","\ud83c\udf3e Polenta (set, portioned)",9.0,9.0,9.0,"Microwave/Skillet",20,12,150,3.0,30.0,2.0,5,30,"1/2 cup","Butter, parmesan, garlic","Italian, American","V, GF",0.4,""],[140,"Starches / Carbs","\ud83c\udf3d Cheesy grits",9.0,9.0,9.0,"Microwave/Stovetop",20,8,250,7.0,32.0,10.0,5,20,"1/2 cup","Grits, cheddar, butter, garlic, cream","American (Southern)","V, GF",0.5,""],[141,"Starches / Carbs","\ud83c\udf3d Corn pudding (sweet-savory)",9.0,9.0,9.0,"Microwave/Oven",20,8,280,6.0,38.0,12.0,10,45,"1/2 cup","Corn, butter, cream, eggs, sugar","American","V, GF",0.6,""],[142,"Starches / Carbs","\ud83c\udf5d Pasta \u2014 penne / rigatoni (plain)",7.0,6.5,7.0,"Microwave",15,8,220,8.0,43.0,2.0,5,12,"1/2 cup","Olive oil, garlic","Italian, American","V, VG, DF",0.35,""],[143,"Starches / Carbs","\ud83c\udf5d Orzo (plain)",6.5,6.0,6.5,"Microwave",15,8,200,7.0,40.0,1.0,5,12,"1/2 cup","Olive oil, herbs, lemon","Mediterranean, Italian","V, VG, DF",0.35,""],[144,"Starches / Carbs","\ud83c\udf5d Cacio e pepe pasta cubes",7.5,7.0,7.5,"Microwave (add splash water)",15,6,310,11.0,42.0,12.0,10,12,"1/2 cup","Pecorino, black pepper, butter, pasta","Italian","V",0.6,""],[145,"Starches / Carbs","\ud83c\udf5d Mac and cheese (stovetop)",8.5,8.0,8.5,"Microwave",20,8,350,12.0,40.0,14.0,10,20,"1/2 cup","Butter, milk, cheddar, pasta","American","V",0.7,""],[146,"Starches / Carbs","\ud83c\udf5d Baked mac & cheese (crust on)",9.0,9.0,9.0,"Oven",25,8,380,14.0,42.0,18.0,15,30,"1/2 cup","Pasta, cheddar, gruy\u00e8re, breadcrumbs, butter","American","V",0.8,""],[147,"Starches / Carbs","\ud83e\udd54 Mashed potatoes (butter & cream)",9.0,8.5,9.0,"Microwave",20,8,190,4.0,25.0,10.0,10,20,"1/2 cup","Butter, garlic, cream/milk, salt","American","V, GF",0.5,""],[148,"Starches / Carbs","\ud83e\udd54 Duchess potatoes (piped, baked)",8.5,8.5,8.5,"Oven only",20,8,220,5.0,30.0,10.0,15,25,"1/2 cup","Butter, egg yolk, nutmeg, cream","French, American","V, GF",0.55,""],[149,"Starches / Carbs","\ud83e\udd54 Potato gratin (dauphinois)",9.0,9.0,9.0,"Oven/Microwave",25,8,310,8.0,28.0,18.0,15,50,"1/2 cup","Cream, gruy\u00e8re, garlic, thyme","French, American","V, GF",0.9,""],[150,"Starches / Carbs","\ud83c\udf5e Stuffing (herb & celery)",8.5,8.0,8.5,"Microwave/Oven",20,8,220,5.0,30.0,9.0,10,30,"1/2 cup","Onion, celery, butter, herbs, bread","American","V",0.6,""],[151,"Starches / Carbs","\ud83c\udf5e Cornbread cubes",8.0,7.5,8.0,"Microwave/Oven",15,8,210,4.0,30.0,8.0,10,25,"1/2 cup","Cornmeal, butter, egg, milk","American","V",0.4,""],[152,"Starches / Carbs","\ud83c\udf5e Savory bread pudding (herb & cheese)",8.5,8.5,8.5,"Microwave/Oven",20,6,290,10.0,32.0,14.0,15,40,"1/2 cup","Bread, egg, cream, herbs, parmesan","American, French","V",0.6,""],[153,"Starches / Carbs","\ud83e\uddc6 Falafel (oven-baked or air-fried)",8.0,7.5,8.0,"Oven/Air fryer",20,10,180,7.0,20.0,8.0,15,15,"1/2 cup","Chickpeas, garlic, parsley, cumin","Middle Eastern, Mediterranean","V, VG, DF",0.6,""],[154,"Starches / Carbs","\ud83e\uded4 Masa (seasoned, portioned)",8.5,8.5,8.5,"Microwave/Skillet",15,10,200,4.0,38.0,4.0,5,15,"1/2 cup","Masa harina, lard/oil, salt","Mexican","V, VG, GF, DF",0.3,""],[155,"Starches / Carbs","\ud83e\uded8 Refried beans",8.5,8.5,8.5,"Microwave",15,10,130,7.0,20.0,3.0,5,20,"1/2 cup","Pinto beans, onion, garlic, lard","Mexican","V, VG, GF, DF",0.35,""],[156,"Starches / Carbs","\ud83e\udd50 Pastry-free quiche filling (egg custard)",7.5,7.0,7.5,"Microwave",20,6,180,11.0,4.0,13.0,15,30,"1/2 cup","Egg, cream, cheese, veggies","French, American","V, GF",0.8,""],[157,"Sauces / Flavor Bases","\ud83e\uded8 Mole negro (complex, chocolate)",10.0,10.0,10.0,"Microwave",20,16,120,3.0,12.0,7.0,30,60,"1/4 cup","Mulato/ancho chili, chocolate, onion, garlic, sesame","Mexican","V, VG, GF, DF",0.9,""],[158,"Sauces / Flavor Bases","\ud83c\udf36\ufe0f Enchilada sauce (red)",9.0,9.0,9.0,"Microwave",15,16,50,1.0,8.0,2.0,10,20,"1/4 cup","Ancho chili, onion, garlic, tomato, cumin","Mexican","V, VG, GF, DF",0.5,""],[159,"Sauces / Flavor Bases","\ud83c\udf36\ufe0f Enchilada sauce (green / salsa verde)",8.5,8.5,8.5,"Microwave",15,12,40,1.0,7.0,1.0,10,20,"1/4 cup","Tomatillo, onion, garlic, jalape\u00f1o, cilantro","Mexican","V, VG, GF, DF",0.5,""],[160,"Sauces / Flavor Bases","\ud83c\udf36\ufe0f Harissa paste (Tunisian chili)",9.0,9.0,9.0,"Room temp/Micro",5,16,30,1.0,4.0,2.0,10,10,"2 tbsp","Roasted chili, cumin, coriander, garlic, olive oil","North African, Mediterranean","V, VG, GF, DF",0.4,""],[161,"Sauces / Flavor Bases","\ud83c\udf3f Chimichurri (Argentinian herb oil)",8.5,8.5,8.5,"Room temp",10,8,90,1.0,1.0,9.0,5,5,"1/4 cup","Parsley, garlic, olive oil, red wine vinegar","South American, American","V, VG, GF, DF",0.4,""],[162,"Sauces / Flavor Bases","\ud83e\uded9 Korean bulgogi marinade / sauce",9.5,9.5,9.5,"Microwave",10,16,70,2.0,9.0,3.0,5,5,"1/4 cup","Soy sauce, Asian pear, garlic, ginger, sesame","Korean","V, VG, DF",0.5,""],[163,"Sauces / Flavor Bases","\ud83e\uded9 Gochujang glaze (Korean)",9.0,9.0,9.0,"Microwave",10,12,60,1.0,12.0,1.0,5,5,"1/4 cup","Gochujang, soy, garlic, sesame oil, sugar","Korean","V, VG, DF",0.35,""],[164,"Sauces / Flavor Bases","\ud83e\udd65 Coconut milk curry base",9.5,9.5,9.5,"Microwave",15,12,150,2.0,10.0,13.0,5,10,"1/4 cup","Coconut milk, lemongrass, galangal, kaffir lime","Thai, Asian","V, VG, GF, DF",0.6,""],[165,"Sauces / Flavor Bases","\ud83e\udd5c Thai peanut sauce",9.0,9.0,9.0,"Microwave",10,12,130,4.0,9.0,9.0,5,5,"1/4 cup","Peanut butter, soy sauce, lime, garlic, ginger","Asian","V, VG, DF",0.5,""],[166,"Sauces / Flavor Bases","\ud83e\uded9 Teriyaki sauce (homemade)",8.5,8.5,8.5,"Microwave",10,16,60,1.0,12.0,0.0,5,5,"1/4 cup","Soy sauce, mirin, sake, sugar","Asian","V, VG, DF",0.3,""],[167,"Sauces / Flavor Bases","\ud83e\uded9 Tonkatsu / katsu sauce",8.0,8.0,8.0,"Room temp",5,16,45,1.0,10.0,0.0,5,5,"2 tbsp","Worcestershire, ketchup, soy sauce, sugar","Asian","V, VG, DF",0.25,""],[168,"Sauces / Flavor Bases","\ud83e\udd65 Sambal oelek (Indonesian chili paste)",8.5,8.5,8.5,"Room temp",5,16,20,0.0,4.0,0.0,5,5,"2 tbsp","Chili, garlic, vinegar","Asian","V, VG, GF, DF",0.2,""],[169,"Sauces / Flavor Bases","\ud83e\udd5c Miso tahini sauce",9.0,9.0,9.0,"Room temp/Micro",10,8,120,4.0,6.0,10.0,5,5,"1/4 cup","Miso, tahini, lemon, garlic, water","Asian, Mediterranean","V, VG, GF, DF",0.6,""],[170,"Sauces / Flavor Bases","\ud83c\udf3f Scallion ginger sauce (steakhouse-style)",8.5,8.5,8.5,"Room temp",5,12,80,0.0,1.0,9.0,5,5,"2 tbsp","Scallion, ginger, neutral oil, salt","Asian","V, VG, GF, DF",0.25,""],[171,"Sauces / Flavor Bases","\ud83c\udf5b Curry sauce (basic onion-tomato)",9.5,9.5,9.5,"Microwave",15,16,80,2.0,8.0,5.0,15,30,"1/4 cup","Onion, garlic, ginger, tomato, curry powder","Indian, Asian","V, VG, GF, DF",0.6,""],[172,"Sauces / Flavor Bases","\ud83c\udf5b Tikka masala sauce (creamy tomato)",9.5,9.5,9.5,"Microwave",15,16,90,3.0,9.0,5.0,15,30,"1/4 cup","Onion, garlic, ginger, tomato, cream, spices","Indian","V, GF",0.7,""],[173,"Sauces / Flavor Bases","\ud83c\udf5b Butter sauce (makhani base)",9.5,9.5,9.5,"Microwave",15,12,110,2.0,8.0,8.0,10,25,"1/4 cup","Tomato, butter, cream, garlic, ginger, cardamom","Indian","V, GF",0.8,""],[174,"Sauces / Flavor Bases","\ud83c\udf45 Marinara sauce (simple)",9.0,9.0,9.0,"Microwave",15,16,70,2.0,12.0,3.0,15,45,"1/4 cup","San Marzano tomato, onion, garlic, basil","Italian, American","V, VG, GF, DF",0.5,""],[175,"Sauces / Flavor Bases","\ud83c\udf45 Arrabbiata sauce (spicy tomato)",9.0,9.0,9.0,"Microwave",15,16,65,2.0,11.0,3.0,15,30,"1/4 cup","Tomato, garlic, chili, olive oil","Italian","V, VG, GF, DF",0.5,""],[176,"Sauces / Flavor Bases","\ud83c\udf45 Shakshuka base (spiced tomato)",9.0,9.0,9.0,"Microwave/Stovetop",15,12,70,2.0,12.0,3.0,10,20,"1/4 cup","Tomato, onion, garlic, cumin, paprika, chili","Middle Eastern, Mediterranean","V, VG, GF, DF",0.5,""],[177,"Sauces / Flavor Bases","\ud83c\udf3f Pesto (Genovese, basil)",8.5,8.5,8.5,"Room temp/Micro",10,12,120,3.0,2.0,12.0,10,10,"1/4 cup","Basil, pine nuts, parmesan, garlic, olive oil","Italian","V, GF",0.8,""],[178,"Sauces / Flavor Bases","\ud83c\udf3f Sun-dried tomato pesto",8.5,8.5,8.5,"Room temp/Micro",10,10,110,3.0,5.0,10.0,8,5,"1/4 cup","Sun-dried tomato, basil, almonds, garlic, parmesan","Italian","V, GF",0.8,""],[179,"Sauces / Flavor Bases","\ud83e\uddc4 Romesco sauce (Catalan)",9.0,9.0,9.0,"Room temp/Micro",10,10,110,3.0,7.0,9.0,10,10,"1/4 cup","Roasted red pepper, almonds, tomato, garlic","Spanish, Mediterranean","V, VG, GF, DF",0.7,""],[180,"Sauces / Flavor Bases","\ud83c\udf3f Tapenade (olive & caper)",8.5,8.5,8.5,"Room temp",5,12,100,1.0,3.0,10.0,8,5,"2 tbsp","Olives, capers, garlic, olive oil, lemon","French, Italian, Mediterranean","V, VG, GF, DF",0.8,""],[181,"Sauces / Flavor Bases","\ud83c\udf4b Preserved lemon chermoula",8.5,8.5,8.5,"Room temp",10,8,80,1.0,3.0,8.0,10,5,"1/4 cup","Preserved lemon, parsley, cilantro, garlic, cumin","North African, Mediterranean","V, VG, GF, DF",0.6,""],[182,"Sauces / Flavor Bases","\ud83e\uddc5 French onion base (caramelized, wine)",9.5,9.5,9.5,"Microwave/Stovetop",15,12,90,2.0,12.0,4.0,5,60,"1/4 cup","Onion, butter, white wine, thyme, beef broth","French","V, GF",0.5,""],[183,"Sauces / Flavor Bases","\ud83c\udf3f Green goddess sauce",8.0,8.0,8.0,"Room temp",10,6,90,2.0,3.0,9.0,5,5,"1/4 cup","Herbs, mayo/yogurt, lemon, garlic, anchovy","American","V, GF",0.5,""],[184,"Sauces / Flavor Bases","\ud83e\uded9 Tonnato sauce (tuna-caper)",8.0,8.0,8.0,"Room temp",10,6,130,8.0,2.0,10.0,5,5,"1/4 cup","Tuna, mayo, capers, lemon, anchovy","Italian","GF, DF",0.8,""],[185,"Sauces / Flavor Bases","\ud83c\udf45 BBQ sauce (smoky, American)",8.5,8.5,8.5,"Microwave",10,16,60,0.0,15.0,0.0,5,15,"1/4 cup","Ketchup, molasses, apple cider vinegar, smoked paprika","American","V, VG, GF, DF",0.3,""],[186,"Sauces / Flavor Bases","\ud83d\udd25 Buffalo sauce",8.0,8.0,8.0,"Microwave",10,16,50,0.0,0.0,5.0,5,5,"1/4 cup","Hot sauce, butter, garlic powder","American","V, GF",0.25,""],[187,"Sauces / Flavor Bases","\ud83e\uded9 Gravy (pan drippings or stock)",8.0,7.5,8.0,"Microwave/Stovetop",15,12,60,2.0,5.0,3.0,10,20,"1/4 cup","Broth, butter, flour, onion","American","V",0.3,""],[188,"Sauces / Flavor Bases","\ud83e\uded9 Bone broth portions (collagen-rich)",7.5,7.5,7.5,"Microwave",15,16,20,5.0,0.0,0.0,10,240,"1/4 cup","Bones, aromatics","American, Asian, Mediterranean","GF, DF",0.5,""],[189,"Soups / Stews","\ud83c\udf36\ufe0f Beef & bean chili (Texas-style)",9.5,9.5,9.5,"Microwave/Stovetop",20,16,280,18.0,28.0,10.0,20,60,"1 cup","Onion, garlic, beef, beans, tomato, cumin","American, Mexican","GF, DF",1.2,""],[190,"Soups / Stews","\ud83e\udd63 Chicken noodle soup (classic)",8.5,8.5,8.5,"Microwave/Stovetop",20,12,190,14.0,18.0,5.0,15,60,"1 cup","Chicken, carrot, celery, onion, noodles, broth","American","DF",1.0,""],[191,"Soups / Stews","\ud83e\udd63 Cream of mushroom (from scratch)",9.0,9.0,9.0,"Microwave/Stovetop",20,10,200,5.0,14.0,14.0,15,25,"1 cup","Mushrooms, cream, shallot, thyme, butter","American, French","V, GF",0.9,""],[192,"Soups / Stews","\ud83e\udd63 Cream of roasted tomato",8.5,8.5,8.5,"Microwave",20,10,180,4.0,20.0,9.0,10,40,"1 cup","Tomato, cream, onion, garlic, basil","Italian, American","V, GF",0.6,""],[193,"Soups / Stews","\ud83e\udd63 Roasted butternut squash soup",9.0,9.0,9.0,"Microwave",20,12,180,4.0,28.0,7.0,10,40,"1 cup","Butternut squash, coconut milk, ginger, onion","American, Asian","V, VG, GF, DF",0.7,""],[194,"Soups / Stews","\ud83e\udd63 Roasted red pepper soup (creamy)",8.5,8.5,8.5,"Microwave",15,10,160,4.0,18.0,8.0,10,30,"1 cup","Roasted red pepper, cream, onion, garlic, paprika","Mediterranean, Spanish","V, GF",0.7,""],[195,"Soups / Stews","\ud83c\udf36\ufe0f White chicken chili",9.0,9.0,9.0,"Microwave/Stovetop",20,12,260,22.0,22.0,8.0,15,45,"1 cup","Chicken, white beans, green chile, onion, cumin, cream","American","GF",1.2,""],[196,"Soups / Stews","\ud83c\udf72 Beef stew (classic American)",9.5,9.5,9.5,"Microwave/Stovetop",25,14,280,22.0,24.0,10.0,20,120,"1 cup","Chuck beef, carrot, celery, potato, onion, beef broth","American","GF, DF",1.8,""],[197,"Soups / Stews","\ud83c\udf72 Gumbo (roux-based Cajun)",9.5,9.5,9.5,"Microwave/Stovetop",25,12,310,18.0,22.0,16.0,20,60,"1 cup","Andouille, shrimp, okra, roux, holy trinity, fil\u00e9","American (Cajun)","GF, DF",2.0,""],[198,"Soups / Stews","\ud83e\udd63 Clam chowder (New England)",8.0,7.5,8.0,"Microwave/Stovetop",20,8,260,12.0,20.0,14.0,15,30,"1 cup","Clams, potato, onion, celery, bacon, cream","American","GF",1.5,""],[199,"Soups / Stews","\ud83e\udd63 Broccoli cheddar soup",8.5,8.5,8.5,"Microwave",20,8,280,12.0,18.0,18.0,10,25,"1 cup","Broccoli, cheddar, onion, carrot, cream","American","V, GF",1.0,""],[200,"Soups / Stews","\ud83e\udd63 Smoky black bean soup",9.0,9.0,9.0,"Microwave",20,12,240,13.0,36.0,5.0,10,40,"1 cup","Black beans, chipotle, onion, garlic, cumin, smoked paprika","Mexican, American","V, VG, GF, DF",0.55,""],[201,"Soups / Stews","\ud83e\udd63 Loaded potato soup",8.5,8.5,8.5,"Microwave",20,8,300,10.0,30.0,16.0,10,30,"1 cup","Potato, bacon, cheddar, sour cream, onion","American","GF",1.0,""],[202,"Soups / Stews","\ud83e\udd63 Tomato bisque (rich & smooth)",9.0,9.0,9.0,"Microwave",20,10,200,4.0,18.0,12.0,10,40,"1 cup","San Marzano tomato, cream, onion, garlic, basil","Italian, American","V, GF",0.7,""],[203,"Soups / Stews","\ud83c\udf72 Posole rojo (red hominy stew)",9.0,9.0,9.0,"Microwave/Stovetop",20,12,200,14.0,22.0,5.0,15,90,"1 cup","Hominy, guajillo, pork, onion, garlic, oregano","Mexican","GF, DF",1.2,""],[204,"Soups / Stews","\ud83c\udf72 Caldo de pollo (Mexican chicken broth)",9.0,9.0,9.0,"Microwave/Stovetop",20,12,120,14.0,8.0,3.0,15,90,"1 cup","Chicken, onion, garlic, carrot, cilantro, jalape\u00f1o","Mexican","GF, DF",0.8,""],[205,"Soups / Stews","\ud83e\udd63 Sopa de fideo (Mexican tomato noodle)",8.0,7.5,8.0,"Microwave/Stovetop",20,8,220,8.0,32.0,6.0,10,20,"1 cup","Fideos, tomato, onion, garlic, chicken broth","Mexican","V, VG, DF",0.6,""],[206,"Soups / Stews","\ud83c\udf72 Beef pho broth concentrate",9.5,9.5,9.5,"Stovetop",20,16,60,8.0,4.0,1.0,15,240,"1 cup","Beef bones, star anise, cinnamon, ginger, onion, fish sauce","Vietnamese","GF, DF",1.0,""],[207,"Soups / Stews","\ud83e\udd63 Tom kha (Thai coconut-galangal soup)",9.0,9.0,9.0,"Microwave/Stovetop",20,10,130,4.0,8.0,9.0,10,20,"1 cup","Coconut milk, lemongrass, galangal, kaffir lime, mushrooms","Thai","V, VG, GF, DF",0.9,""],[208,"Soups / Stews","\ud83c\udf72 Khao tom (Thai rice soup)",8.5,8.5,8.5,"Microwave/Stovetop",20,10,190,12.0,28.0,4.0,10,20,"1 cup","Rice, chicken, ginger, garlic, fish sauce, scallion","Thai","GF, DF",0.7,""],[209,"Soups / Stews","\ud83c\udf72 Soondubu jjigae base (Korean soft tofu stew)",9.0,9.0,9.0,"Stovetop",20,8,150,10.0,8.0,8.0,10,15,"1 cup","Soft tofu, gochugaru, onion, garlic, anchovy broth","Korean","GF, DF",0.9,""],[210,"Soups / Stews","\ud83e\udd63 Miso soup (dashi-based)",7.5,7.5,7.5,"Microwave/Stovetop",10,12,50,4.0,5.0,2.0,5,5,"1 cup","Dashi, miso, tofu, scallion, wakame","Japanese","V, VG, GF, DF",0.4,""],[211,"Soups / Stews","\ud83e\udd63 Hot and sour soup (Chinese)",8.5,8.5,8.5,"Microwave/Stovetop",20,8,110,8.0,12.0,4.0,15,20,"1 cup","Shiitake, bamboo, tofu, egg, vinegar, white pepper","Asian","V, DF",0.7,""],[212,"Soups / Stews","\ud83e\udd63 French onion soup base",9.0,9.0,9.0,"Stovetop",20,12,120,4.0,12.0,5.0,10,60,"1 cup","Caramelized onion, beef broth, wine, thyme","French","GF, DF",0.7,""],[213,"Soups / Stews","\ud83c\udf72 Ribollita (Tuscan bread stew)",8.5,8.5,8.5,"Microwave/Stovetop",20,10,240,9.0,34.0,7.0,15,40,"1 cup","Kale, cannellini, tomato, day-old bread, onion, garlic","Italian","V, VG",0.8,""],[214,"Soups / Stews","\ud83e\udd63 Minestrone (Italian vegetable soup)",8.0,8.0,8.0,"Microwave/Stovetop",20,12,180,8.0,30.0,4.0,20,40,"1 cup","Onion, garlic, tomato, celery, carrot, pasta, cannellini","Italian","V, VG",0.8,""],[215,"Soups / Stews","\ud83c\udf72 Borscht (Ukrainian beet soup)",8.5,8.5,8.5,"Microwave/Stovetop",20,12,160,5.0,24.0,5.0,15,60,"1 cup","Beet, cabbage, carrot, onion, potato, dill","Eastern European","V, VG, GF, DF",0.7,""],[216,"Soups / Stews","\ud83c\udf72 Caldo verde (Portuguese kale & chorizo)",8.5,8.5,8.5,"Microwave/Stovetop",20,10,200,10.0,22.0,8.0,10,30,"1 cup","Kale, chorizo, potato, onion, garlic","Portuguese","GF, DF",1.0,""],[217,"Soups / Stews","\ud83e\udd63 White bean & rosemary soup",8.5,8.5,8.5,"Microwave",20,12,210,12.0,32.0,4.0,10,30,"1 cup","Cannellini, rosemary, garlic, onion, broth","Italian, Mediterranean","V, VG, GF, DF",0.7,""],[218,"Soups / Stews","\ud83e\udd63 Pasta e fagioli (pasta & bean)",8.5,8.5,8.5,"Microwave",20,10,260,12.0,36.0,6.0,15,30,"1 cup","Pasta, cannellini, tomato, onion, garlic, rosemary","Italian","V, VG",0.7,""],[219,"Soups / Stews","\ud83e\udd63 Avgolemono (Greek lemon-egg-rice)",8.5,8.0,8.5,"Microwave/Stovetop",20,8,180,10.0,20.0,5.0,10,30,"1 cup","Chicken broth, orzo, eggs, lemon","Greek","GF, DF",0.7,""],[220,"Soups / Stews","\ud83e\udd63 Creamy roasted red pepper soup",8.5,8.5,8.5,"Microwave",15,10,160,4.0,18.0,8.0,10,30,"1 cup","Roasted red pepper, cream, onion, garlic, paprika","Mediterranean, Spanish","V, GF",0.7,""],[221,"Soups / Stews","\ud83c\udf72 Dahl (red lentil, tarka)",9.0,9.0,9.0,"Microwave",20,12,220,13.0,36.0,4.0,10,30,"1 cup","Red lentil, onion, garlic, ginger, turmeric, cumin","Indian","V, VG, GF, DF",0.55,""],[222,"Soups / Stews","\ud83e\udd63 Mulligatawny (spiced chicken-lentil)",8.5,8.5,8.5,"Microwave",20,10,250,12.0,28.0,9.0,15,40,"1 cup","Chicken, lentil, apple, curry, coconut milk","Indian, British","GF, DF",1.0,""],[223,"Soups / Stews","\ud83e\udd63 Lentil soup (Moroccan spiced)",9.0,9.0,9.0,"Microwave",20,12,230,14.0,38.0,4.0,15,40,"1 cup","Lentil, onion, garlic, carrot, cumin, paprika, lemon","Mediterranean, North African","V, VG, GF, DF",0.6,""],[224,"Soups / Stews","\ud83e\udd63 Lamb & chickpea harira",9.0,9.0,9.0,"Microwave/Stovetop",20,12,280,18.0,30.0,8.0,15,90,"1 cup","Lamb, chickpeas, tomato, lemon, coriander, cinnamon","North African","GF, DF",1.8,""],[225,"Soups / Stews","\ud83c\udf72 Zuppa toscana (sausage, potato, kale)",9.0,9.0,9.0,"Microwave/Stovetop",20,10,290,14.0,20.0,16.0,15,30,"1 cup","Italian sausage, kale, potato, cream, garlic, onion","Italian, American","GF",1.2,""],[226,"Soups / Stews","\ud83e\udd63 Chickpea & spinach stew (Chole-style)",8.5,8.5,8.5,"Microwave",20,12,220,10.0,28.0,7.0,15,30,"1 cup","Chickpeas, spinach, onion, garlic, ginger, tomato, spices","Indian, Mediterranean","V, VG, GF, DF",0.7,""],[227,"Noodles & Dumplings","\ud83e\udd5f Gyoza / potstickers (pork & cabbage)",8.5,8.0,8.5,"Skillet (steam-fry)",20,8,220,10.0,24.0,9.0,20,15,"1/2 cup","Pork, cabbage, garlic, ginger, soy, sesame","Asian","DF",1.5,""],[228,"Noodles & Dumplings","\ud83e\udd5f Wontons in broth (pork-shrimp)",8.5,8.0,8.5,"Microwave/Stovetop",20,6,200,11.0,22.0,6.0,20,15,"1/2 cup","Pork, shrimp, soy, ginger, garlic, scallion","Asian","DF",1.2,""],[229,"Noodles & Dumplings","\ud83e\udd5f Xiao long bao (pork soup dumplings)",8.0,7.5,8.0,"Steamer only",25,4,210,10.0,22.0,9.0,30,15,"1/2 cup","Pork, gelatin broth, ginger, soy, shaoxing","Asian","DF",2.0,"Best bought frozen from Asian market"],[230,"Noodles & Dumplings","\ud83c\udf5c Ramen noodles (plain, portioned)",7.0,6.0,7.0,"Microwave/Stovetop",10,4,190,7.0,36.0,2.0,5,8,"1/2 cup","None \u2014 add broth/sauce","Asian","V, VG, DF",0.3,""],[231,"Noodles & Dumplings","\ud83c\udf5c Soba noodles (portioned)",7.5,7.5,7.5,"Room temp",10,6,180,7.0,36.0,1.0,5,8,"1/2 cup","Soy sauce, dashi, mirin","Asian","V, VG, DF",0.6,""],[232,"Noodles & Dumplings","\ud83c\udf5c Rice noodles (portioned)",7.0,6.5,7.0,"Microwave/Stovetop",10,6,190,4.0,42.0,0.0,5,8,"1/2 cup","None \u2014 add sauce/broth","Asian","V, VG, GF, DF",0.35,""],[233,"Noodles & Dumplings","\ud83c\udf5c Udon noodles (portioned)",7.0,6.5,7.0,"Microwave/Stovetop",10,4,200,7.0,40.0,1.0,5,10,"1/2 cup","None \u2014 add broth/sauce","Asian","V, VG, DF",0.5,""],[234,"Noodles & Dumplings","\ud83c\udf5d Pasta e fagioli (pasta & beans)",8.5,8.5,8.5,"Microwave",20,10,260,12.0,36.0,6.0,15,30,"1 cup","Pasta, cannellini, tomato, rosemary, garlic","Italian","V, VG",0.7,""],[235,"Noodles & Dumplings","\ud83e\uded4 Lasagna portions (beef & ricotta)",9.0,8.5,9.0,"Oven/Microwave",25,8,320,18.0,24.0,16.0,20,50,"1 cup","Ricotta, beef/turkey, marinara, mozzarella, pasta","Italian","",1.8,""],[236,"Noodles & Dumplings","\ud83c\udf5d Cacio e pepe pasta cubes",7.5,7.0,7.5,"Microwave (add splash water)",15,6,310,11.0,42.0,12.0,10,12,"1/2 cup","Pasta, pecorino, black pepper, butter","Italian","V",0.6,""],[237,"Noodles & Dumplings","\ud83e\udd5c Peanut noodle base (cold/room temp)",8.5,8.0,8.5,"Room temp",10,6,300,10.0,38.0,13.0,10,10,"1/2 cup","Noodles, peanut butter, soy, sesame, lime, ginger","Asian","V, VG",0.7,""],[238,"Warm Puddings & Comfort","\ud83e\udd54 Potato gratin (dauphinois)",9.0,9.0,9.0,"Oven/Microwave",25,8,310,8.0,28.0,18.0,15,50,"1/2 cup","Potato, cream, gruy\u00e8re, garlic, thyme","French, American","V, GF",0.9,""],[239,"Warm Puddings & Comfort","\ud83e\uddc0 Baked mac & cheese (crust on)",9.0,9.0,9.0,"Oven",25,8,380,14.0,42.0,18.0,15,30,"1/2 cup","Pasta, cheddar, gruy\u00e8re, breadcrumbs, butter","American","V",0.8,""],[240,"Warm Puddings & Comfort","\ud83c\udf3d Corn pudding (sweet-savory custard)",9.0,9.0,9.0,"Microwave/Oven",20,8,280,6.0,38.0,12.0,10,45,"1/2 cup","Corn, butter, cream, eggs, sugar","American","V, GF",0.6,""],[241,"Warm Puddings & Comfort","\ud83c\udf3d Cheesy grits pudding",9.0,9.0,9.0,"Microwave/Stovetop",20,8,270,8.0,32.0,12.0,5,25,"1/2 cup","Grits, sharp cheddar, butter, cream, garlic","American (Southern)","V, GF",0.55,""],[242,"Warm Puddings & Comfort","\ud83c\udf5e Savory bread pudding (herb & cheese)",8.5,8.5,8.5,"Microwave/Oven",20,6,290,10.0,32.0,14.0,15,40,"1/2 cup","Bread, eggs, cream, herbs, parmesan","American, French","V",0.6,""],[243,"Warm Puddings & Comfort","\ud83e\uddc4 Roasted garlic & white bean pur\u00e9e",9.0,9.0,9.0,"Microwave",15,10,180,9.0,28.0,4.0,10,45,"1/2 cup","Cannellini, roasted garlic, olive oil, rosemary","Italian, Mediterranean","V, VG, GF, DF",0.55,""],[244,"Warm Puddings & Comfort","\ud83e\udd55 Carrot ginger pur\u00e9e",8.5,8.5,8.5,"Microwave",15,12,90,2.0,18.0,3.0,5,30,"1/2 cup","Carrot, ginger, coconut milk, garlic","Asian, American","V, VG, GF, DF",0.5,""],[245,"Warm Puddings & Comfort","\ud83e\udd54 Mashed cauliflower (loaded)",8.5,8.5,8.5,"Microwave",15,10,90,4.0,10.0,5.0,10,20,"1/2 cup","Cauliflower, butter, cream cheese, garlic","American","V, GF",0.6,""],[246,"Warm Puddings & Comfort","\ud83c\udf60 Mashed sweet potato (spiced)",9.0,9.0,9.0,"Microwave",20,10,160,3.0,34.0,4.0,5,25,"1/2 cup","Sweet potato, butter, cinnamon, maple syrup","American","V, GF",0.5,""],[247,"Warm Puddings & Comfort","\ud83e\uddc0 Fondue (gruy\u00e8re & white wine)",8.0,7.5,8.0,"Stovetop",15,4,250,14.0,5.0,18.0,10,15,"1/4 cup","Gruy\u00e8re, emmental, white wine, cornstarch, garlic","French, Swiss","V, GF",1.5,"Freeze in small cubes; reheat low and slow with splash of wine"],[248,"Grain Bowls & Specialty Bases","\ud83c\udf3e Tabbouleh base (bulgur, parsley)",8.0,8.0,8.0,"Room temp",10,6,170,5.0,32.0,4.0,10,15,"1/2 cup","Bulgur, parsley, tomato, cucumber, lemon","Middle Eastern, Mediterranean","V, VG",0.45,""],[249,"Grain Bowls & Specialty Bases","\ud83c\udf3e Fattoush grain base (farro, sumac)",7.5,7.5,7.5,"Room temp",10,4,160,5.0,28.0,5.0,10,10,"1/2 cup","Farro, sumac, parsley, radish, lemon","Middle Eastern","V, VG",0.6,""],[250,"Grain Bowls & Specialty Bases","\ud83e\uded8 Mujaddara (lentil & rice)",9.0,9.0,9.0,"Microwave",15,12,240,9.0,40.0,6.0,5,30,"1/2 cup","Lentils, rice, caramelized onion, cumin","Middle Eastern, Mediterranean","V, VG, GF, DF",0.5,""],[251,"Grain Bowls & Specialty Bases","\ud83e\uded8 Beet & walnut muhammara",8.5,8.5,8.5,"Room temp",10,8,150,4.0,10.0,12.0,10,15,"1/4 cup","Roasted beet, walnuts, pomegranate molasses, garlic, cumin","Middle Eastern","V, VG, GF, DF",0.8,""],[252,"Grain Bowls & Specialty Bases","\ud83c\udf5a Coconut jasmine rice",9.0,9.0,9.0,"Microwave",15,12,240,4.0,48.0,5.0,5,20,"1/2 cup","Jasmine rice, coconut milk, salt, lime leaf","Asian, Caribbean","V, VG, GF, DF",0.4,""],[253,"Grain Bowls & Specialty Bases","\ud83c\udf3d Elote rice (Mexican street corn)",9.0,8.5,9.0,"Microwave",15,10,250,5.0,44.0,7.0,10,20,"1/2 cup","Rice, corn, cotija, chili, lime, mayo","Mexican","V, GF",0.55,""],[254,"Grain Bowls & Specialty Bases","\ud83c\udf3e Wild rice pilaf",8.5,8.5,8.5,"Microwave",15,12,210,7.0,42.0,3.0,5,50,"1/2 cup","Wild rice, broth, onion, celery, dried cranberry, herbs","American","V, VG, GF, DF",0.65,""],[255,"Grain Bowls & Specialty Bases","\ud83e\udd57 Panzanella base (bread & tomato)",7.5,7.0,7.5,"Room temp/Oven",15,4,200,5.0,28.0,8.0,10,15,"1/2 cup","Day-old bread, tomato, basil, olive oil, red wine vinegar","Italian","V, VG",0.5,""],[256,"Grain Bowls & Specialty Bases","\ud83e\udd5c Peanut noodle base (cold)",8.5,8.0,8.5,"Room temp",10,6,300,10.0,38.0,13.0,10,10,"1/2 cup","Noodles, peanut butter, soy, sesame, lime, ginger","Asian","V, VG",0.7,""],[257,"Grain Bowls & Specialty Bases","\ud83e\uddc4 Arroz con leche (savory herb rice)",8.0,8.0,8.0,"Microwave",15,8,220,5.0,40.0,5.0,5,25,"1/2 cup","Rice, milk, garlic, herbs, parmesan","Spanish, Latin","V, GF",0.4,""],[258,"Desserts","\ud83c\udf53 Strawberry compote",9.0,9.0,9.0,"Microwave",10,16,80,0.0,20.0,0.0,5,15,"1/4 cup","Strawberry, sugar, lemon, vanilla","American, French","V, VG, GF, DF",0.6,""],[259,"Desserts","\ud83e\uded0 Blueberry compote",9.0,9.0,9.0,"Microwave",10,16,75,0.0,18.0,0.0,5,12,"1/4 cup","Blueberry, sugar, lemon","American","V, VG, GF, DF",0.7,""],[260,"Desserts","\ud83c\udf51 Peach compote",9.0,9.0,9.0,"Microwave",10,12,85,0.0,22.0,0.0,5,15,"1/4 cup","Peach, sugar, vanilla, lemon, cinnamon","American, French","V, VG, GF, DF",0.7,""],[261,"Desserts","\ud83c\udf52 Cherry compote / coulis",9.0,9.0,9.0,"Microwave",10,16,70,0.0,18.0,0.0,5,15,"1/4 cup","Cherry, sugar, lemon, optional kirsch","American, French","V, VG, GF, DF",0.8,""],[262,"Desserts","\ud83c\udf4c Caramelized banana slices",8.5,8.0,8.5,"Microwave/Skillet",10,8,110,1.0,27.0,1.0,5,8,"1/4 cup","Banana, butter, brown sugar, cinnamon","American, Caribbean","V, GF",0.4,""],[263,"Desserts","\ud83c\udf4e Spiced apple compote (Apfelmus)",9.0,9.0,9.0,"Microwave",10,16,90,0.0,23.0,0.0,5,20,"1/4 cup","Apple, cinnamon, cloves, brown sugar, lemon","American, German","V, VG, GF, DF",0.5,""],[264,"Desserts","\ud83e\uded9 Mango coulis",9.0,9.0,9.0,"Room temp/Micro",5,12,70,0.0,18.0,0.0,5,8,"1/4 cup","Mango, lime, sugar","Asian, Caribbean, Mexican","V, VG, GF, DF",0.7,""],[265,"Desserts","\ud83c\udf4a Orange curd portions",8.5,8.0,8.5,"Microwave (low)",15,8,130,2.0,18.0,6.0,8,8,"2 tbsp","Orange juice/zest, egg, butter, sugar","American, British","V, GF",0.6,""],[266,"Desserts","\ud83c\udf4b Lemon curd portions",8.5,8.0,8.5,"Microwave (low)",15,8,120,2.0,16.0,6.0,8,8,"2 tbsp","Lemon juice/zest, egg, butter, sugar","British, American","V, GF",0.6,""],[267,"Desserts","\ud83c\udf6e Cr\u00e8me br\u00fbl\u00e9e portions (pre-custard)",9.0,9.0,9.0,"Oven then torch",30,6,280,4.0,24.0,18.0,15,40,"1/4 cup","Cream, egg yolk, sugar, vanilla","French","V, GF",0.9,"Freeze before torching; torch fresh after thawing"],[268,"Desserts","\ud83c\udf6e Vanilla custard / cr\u00e8me anglaise",8.5,8.5,8.5,"Microwave (low)",20,6,160,3.0,20.0,7.0,10,20,"1/4 cup","Cream, egg yolk, sugar, vanilla","French, British","V, GF",0.7,""],[269,"Desserts","\ud83c\udf6e Chocolate mousse portions",8.5,8.0,8.5,"Refrigerator thaw",90,4,220,4.0,18.0,15.0,20,30,"1/4 cup","Dark chocolate, cream, egg white, sugar","French, American","V, GF",0.8,""],[270,"Desserts","\ud83c\udf6e Tapioca pudding (coconut milk)",8.0,8.0,8.0,"Microwave",20,6,190,2.0,36.0,6.0,10,30,"1/4 cup","Tapioca, coconut milk, sugar, vanilla, pandan","Asian","V, VG, GF, DF",0.5,""],[271,"Desserts","\ud83c\udf6e Kheer (Indian rice pudding)",9.0,9.0,9.0,"Microwave",20,6,210,5.0,38.0,5.0,10,30,"1/4 cup","Basmati rice, whole milk, cardamom, rose water, pistachios","Indian","V, GF",0.6,""],[272,"Desserts","\ud83c\udf6e Arroz con leche (Mexican rice pudding)",9.0,9.0,9.0,"Microwave",20,6,200,5.0,36.0,5.0,10,30,"1/4 cup","Rice, whole milk, cinnamon, sugar, lemon zest","Mexican, Spanish","V, GF",0.55,""],[273,"Desserts","\ud83c\udf6b Pots de cr\u00e8me (dark chocolate)",9.0,9.0,9.0,"Refrigerator thaw",90,6,260,5.0,22.0,17.0,15,35,"1/4 cup","Dark chocolate, cream, egg yolk, sugar, vanilla","French","V, GF",1.0,""],[274,"Desserts","\ud83c\udf6e Panna cotta (vanilla bean)",9.0,9.0,9.0,"Refrigerator thaw",120,8,200,3.0,22.0,11.0,10,20,"1/4 cup","Cream, gelatin, sugar, vanilla","Italian","V, GF",0.7,""],[275,"Desserts","\ud83c\udf70 Brownie bites (fudgy)",8.5,8.0,8.5,"Microwave",15,8,180,2.0,25.0,9.0,15,30,"1 piece","Dark chocolate, butter, eggs, sugar, flour","American","V",0.4,""],[276,"Desserts","\ud83c\udf70 Lemon bars (filling only)",8.0,7.5,8.0,"Refrigerator thaw",90,6,140,2.0,22.0,5.0,15,30,"1 piece","Lemon, eggs, sugar, butter, flour","American","V",0.5,""],[277,"Desserts","\ud83c\udf70 Banana bread slices",8.0,7.5,8.0,"Microwave",15,8,200,3.0,32.0,7.0,15,60,"1 slice","Banana, flour, butter, egg, brown sugar","American","V",0.4,""],[278,"Desserts","\ud83c\udf70 Pumpkin spice bars",8.5,8.5,8.5,"Microwave",15,8,190,3.0,30.0,7.0,15,35,"1 piece","Pumpkin pur\u00e9e, flour, eggs, butter, brown sugar, spices","American","V",0.45,""],[279,"Desserts","\ud83c\udf70 Cheesecake bites (New York-style)",9.0,8.5,9.0,"Refrigerator thaw",120,8,220,4.0,22.0,13.0,20,60,"1 piece","Cream cheese, eggs, sugar, vanilla, graham cracker","American","V",0.8,""],[280,"Desserts","\ud83c\udf70 Tres leches cake portions",8.5,8.0,8.5,"Refrigerator thaw",120,4,260,5.0,34.0,11.0,20,30,"1 piece","Sponge cake, evaporated milk, condensed milk, heavy cream","Mexican","V",0.7,""],[281,"Desserts","\ud83c\udf6b Chocolate lava cake (frozen pre-baked)",9.0,9.0,9.0,"Oven only",0,8,330,5.0,40.0,16.0,20,15,"1 piece","Dark chocolate, butter, eggs, sugar, flour","French, American","V",0.9,"Bake from frozen: 425\u00b0F 12 min"],[282,"Desserts","\ud83c\udf70 Olive oil cake slices",8.0,7.5,8.0,"Room temp",30,6,240,4.0,30.0,12.0,15,40,"1 slice","Olive oil, flour, eggs, sugar, lemon, yogurt","Italian, Mediterranean","V",0.6,""],[283,"Desserts","\ud83c\udf66 Semifreddo (frozen Italian nougat)",9.0,9.0,9.0,"Freeze \u2014 serve frozen",0,12,250,4.0,28.0,13.0,20,30,"1 slice","Cream, eggs, sugar, hazelnuts or berries","Italian","V, GF",0.9,"Serve directly from freezer \u2014 no thawing"],[284,"Desserts","\ud83c\udf66 Mango lassi sorbet portions",8.5,8.5,8.5,"Serve semi-frozen",15,8,140,2.0,32.0,2.0,10,15,"1/4 cup","Mango, yogurt, sugar, cardamom, rose water","Indian","V, GF",0.6,""],[285,"Desserts","\ud83c\udf6b Chocolate bark (salty-sweet)",8.0,8.0,8.0,"Room temp",10,16,180,2.0,22.0,9.0,5,20,"1 oz","Dark chocolate, sea salt, almonds/pistachios, dried fruit","American","V, GF, DF",0.7,""],[286,"Desserts","\ud83c\udf6b Chocolate ganache sauce",9.0,9.0,9.0,"Microwave (low)",10,12,110,1.0,12.0,7.0,5,5,"2 tbsp","Dark chocolate, cream, butter","French, American","V, GF",0.5,""],[287,"Desserts","\ud83c\udf6e Salted caramel sauce",9.0,9.0,9.0,"Microwave",10,12,100,0.0,17.0,4.0,8,10,"2 tbsp","Sugar, butter, cream, sea salt, vanilla","American, French","V, GF",0.5,""],[288,"Desserts","\ud83c\udf66 Cr\u00e8me fra\u00eeche",8.0,8.0,8.0,"Room temp",5,12,50,1.0,1.0,5.0,0,0,"2 tbsp","Cream, culture (or buttermilk)","French","V, GF",0.4,""],[289,"Desserts","\ud83e\uded9 Dulce de leche",9.0,9.0,9.0,"Microwave",10,12,120,2.0,22.0,3.0,5,90,"2 tbsp","Sweetened condensed milk","Latin American","V, GF",0.5,""],[290,"Desserts","\ud83c\udf53 Strawberry-rhubarb jam portions",8.5,8.5,8.5,"Microwave",10,16,60,0.0,15.0,0.0,5,30,"2 tbsp","Strawberry, rhubarb, sugar, lemon","American, British","V, VG, GF, DF",0.4,""]];
+// Expand compact array to objects
+const KEYS=['id','category','name','rating','tex','flav','reheat','thaw','freeze_life','cal','protein','carbs','fat','active_prep','hands_off','container','shared_ing','cuisine','dietary','cost','notes'];
+const RAW=RAW_ARR.map(a=>{const o={};KEYS.forEach((k,i)=>o[k]=a[i]);return o;});
+
+const CAT_CSS={
+  "Proteins":"red","Vegetables":"green","Starches / Carbs":"amber",
+  "Sauces / Flavor Bases":"purple","Soups / Stews":"blue",
+  "Noodles & Dumplings":"teal","Warm Puddings & Comfort":"orange",
+  "Grain Bowls & Specialty Bases":"indigo","Desserts":"pink"
+};
+const MODES={
+  bowl:["Proteins","Starches / Carbs","Vegetables","Sauces / Flavor Bases"],
+  soup:["Soups / Stews","Proteins","Vegetables","Sauces / Flavor Bases"],
+  noodle:["Noodles & Dumplings","Proteins","Vegetables","Sauces / Flavor Bases"],
+  comfort:["Warm Puddings & Comfort","Proteins","Vegetables","Sauces / Flavor Bases"],
+  dessert:["Desserts","Desserts","Warm Puddings & Comfort","Sauces / Flavor Bases"],
+};
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DIET_CSS={V:"diet",VG:"vg",GF:"gf",DF:"df"};
+
+let current=[],locked={},compact=false,rateVal=0;
+let favs=JSON.parse(localStorage.getItem('ll_favs2')||'[]');
+let hist=JSON.parse(localStorage.getItem('ll_hist2')||'[]');
+let weekData=[];
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+const rand=a=>a[Math.floor(Math.random()*a.length)];
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const $ =id=>document.getElementById(id);
+
+function pool(cat,cuisine,dietary){
+  return RAW.filter(i=>{
+    if(i.category!==cat) return false;
+    if(cuisine&&cuisine!=='__coherent__'&&!i.cuisine.toLowerCase().includes(cuisine.toLowerCase())) return false;
+    if(dietary){const f=i.dietary.split(',').map(s=>s.trim());if(!f.includes(dietary)) return false;}
+    return true;
+  });
+}
+
+function weightedPick(p,chaos=false){
+  if(!p.length) return null;
+  const w=p.map(i=>chaos?Math.max(0.5,10-i.rating):i.rating**2);
+  const t=w.reduce((a,b)=>a+b,0);
+  let r=Math.random()*t;
+  for(let i=0;i<p.length;i++){r-=w[i];if(r<=0)return p[i];}
+  return p[p.length-1];
+}
+
+function coherentCuisine(cats,dietary){
+  const all=cats.flatMap(cat=>pool(cat,'',dietary).flatMap(i=>i.cuisine.split(',').map(s=>s.trim())));
+  const cnt={};all.forEach(c=>{cnt[c]=(cnt[c]||0)+1;});
+  const ok=Object.entries(cnt).filter(([,v])=>v>=cats.length).map(([k])=>k);
+  return ok.length?rand(ok):null;
+}
+
+function getTotals(items){
+  const v=items.filter(Boolean);
+  return{cal:v.reduce((a,i)=>a+i.cal,0),pro:v.reduce((a,i)=>a+i.protein,0),
+    carbs:v.reduce((a,i)=>a+i.carbs,0),fat:v.reduce((a,i)=>a+i.fat,0),
+    cost:v.reduce((a,i)=>a+i.cost,0),prep:v.reduce((a,i)=>a+i.active_prep,0)};
+}
+
+function getCuisineOverlap(items){
+  const v=items.filter(Boolean);
+  if(!v.length) return{common:[],mixed:true};
+  const sets=v.map(i=>new Set(i.cuisine.split(',').map(s=>s.trim())));
+  const common=[...sets[0]].filter(c=>sets.every(s=>s.has(c)));
+  return{common,mixed:!common.length};
+}
+
+function reheatingConflict(items){
+  const r=items.filter(Boolean).map(i=>i.reheat.toLowerCase());
+  return r.some(s=>s.includes('oven only'))&&r.some(s=>s.includes('stovetop')||s==='skillet');
+}
+
+function sharedIngs(items){
+  const v=items.filter(Boolean);
+  const all=v.flatMap(i=>i.shared_ing.split(',').map(s=>s.trim().toLowerCase())).filter(s=>s&&s!=='none');
+  const cnt={};all.forEach(s=>{cnt[s]=(cnt[s]||0)+1;});
+  return Object.entries(cnt).filter(([,c])=>c>1).map(([k])=>k);
+}
+
+function buildSeq(items){
+  const v=items.filter(Boolean);
+  const sorted=[...v].sort((a,b)=>b.thaw-a.thaw);
+  const steps=[];
+  sorted.forEach(it=>{if(it.thaw>10)steps.push({t:`${it.thaw} min before`,body:`Remove <strong>${it.name.replace(/^\S+\s*/,'')}</strong> from freezer`});});
+  const oven=v.filter(i=>i.reheat.toLowerCase().includes('oven'));
+  const micro=v.filter(i=>i.reheat.toLowerCase().includes('microwave'));
+  const skillet=v.filter(i=>i.reheat.toLowerCase().includes('skillet')&&!i.reheat.toLowerCase().includes('micro'));
+  const room=v.filter(i=>i.reheat.toLowerCase().includes('room temp'));
+  if(oven.length) steps.push({t:'Preheat 375°F',body:`Oven: <strong>${oven.map(n=>n.name.replace(/^\S+\s*/,'')).join(', ')}</strong>`});
+  if(micro.length) steps.push({t:'Microwave',body:`Defrost then full power: <strong>${micro.map(n=>n.name.replace(/^\S+\s*/,'')).join(', ')}</strong>`});
+  if(skillet.length) steps.push({t:'Skillet',body:`Heat skillet: <strong>${skillet.map(n=>n.name.replace(/^\S+\s*/,'')).join(', ')}</strong>`});
+  if(room.length) steps.push({t:'Room temp',body:`Set out: <strong>${room.map(n=>n.name.replace(/^\S+\s*/,'')).join(', ')}</strong>`});
+  steps.push({t:'Plate',body:'Combine in bowl, add fresh toppings'});
+  return steps;
+}
+
+// ═══════════════════════════════════════════
+// SHUFFLE
+// ═══════════════════════════════════════════
+function shuffle(mode='normal'){
+  const cuisine=$('f-cuisine').value;
+  const dietary=$('f-dietary').value;
+  const mKey=$('f-mode').value;
+  const cats=MODES[mKey];
+  const goalCal=parseInt($('g-cal').value)||null;
+  const goalPro=parseInt($('g-pro').value)||null;
+  const forceCuisine=cuisine==='__coherent__'?coherentCuisine(cats,dietary):null;
+
+  updateActiveFilters();
+  current=[];
+  cats.forEach((cat,idx)=>{
+    if(locked[idx]){current.push(locked[idx]);return;}
+    let p=pool(cat,forceCuisine||cuisine,dietary);
+    if(!p.length) p=pool(cat,'',dietary);
+    if(!p.length){current.push(null);return;}
+    // Pantry filter
+    const usePantry=$('f-pantry')&&$('f-pantry').checked&&pantry.size>0;
+    if(usePantry){
+      const pantryP=p.filter(item=>itemMatchesPantry(item));
+      if(pantryP.length) p=pantryP;
+    }
+    if((goalCal||goalPro)&&p.length>1){
+      const targetCal=goalCal?goalCal/cats.length:null;
+      const targetPro=goalPro?goalPro/cats.length:null;
+      let best=p[0],bestScore=999;
+      p.forEach(item=>{
+        let score=0;
+        if(targetCal) score+=Math.abs(item.cal-targetCal)/(targetCal||1);
+        if(targetPro) score+=Math.abs(item.protein-targetPro)/(targetPro||1);
+        if(score<bestScore){bestScore=score;best=item;}
+      });
+      current.push(best);
+    } else {
+      current.push(weightedPick(p,mode==='chaos'));
+    }
+  });
+  renderAll();
+}
+
+function shuffleSurprise(){
+  const mKey=$('f-mode').value;
+  const cats=MODES[mKey];
+  const dietary=$('f-dietary').value;
+  updateActiveFilters();
+  current=[];
+  cats.forEach((cat,idx)=>{
+    if(locked[idx]){current.push(locked[idx]);return;}
+    let p=pool(cat,'',dietary);
+    if(!p.length){current.push(null);return;}
+    const usePantry2=$('f-pantry')&&$('f-pantry').checked&&pantry.size>0;
+    if(usePantry2){const pP=p.filter(item=>itemMatchesPantry(item));if(pP.length)p=pP;}
+    const bottom=[...p].sort((a,b)=>a.rating-b.rating).slice(0,Math.max(1,Math.floor(p.length*.35)));
+    current.push(rand(bottom));
+  });
+  renderAll();
+}
+
+function clearLocks(){locked={};shuffle();}
+
+function swapSlot(idx){
+  delete locked[idx];
+  const mKey=$('f-mode').value;
+  const cat=MODES[mKey][idx];
+  const dietary=$('f-dietary').value;
+  let p=pool(cat,'',dietary).filter(i=>!current[idx]||i.id!==current[idx].id);
+  if(!p.length) return;
+  current[idx]=weightedPick(p);
+  renderAll();
+}
+
+function pinCompatible(idx){
+  const item=current[idx];if(!item) return;
+  locked[idx]=item;
+  const cuisines=item.cuisine.split(',').map(s=>s.trim());
+  const dietary=$('f-dietary').value;
+  const mKey=$('f-mode').value;
+  const cats=MODES[mKey];
+  current=current.map((c,i)=>{
+    if(locked[i]) return locked[i];
+    const cat=cats[i];
+    let best=null;
+    for(const cuis of cuisines){
+      const p=pool(cat,cuis,dietary);
+      if(p.length){best=weightedPick(p);break;}
+    }
+    return best||c;
+  });
+  renderAll();
+}
+
+function toggleLock(idx){
+  if(locked[idx]) delete locked[idx];
+  else locked[idx]=current[idx];
+  renderBricks();
+}
+
+function toggleCompact(){
+  compact=!compact;
+  $('btn-compact').style.background=compact?'var(--amber-soft)':'';
+  $('btn-compact').style.color=compact?'var(--amber)':'';
+  const grid=$('brick-grid');
+  grid.classList.toggle('compact',compact);
+}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function renderAll(){renderBricks();renderTotals();renderSidebar();}
+
+function renderBricks(){
+  const grid=$('brick-grid');
+  grid.innerHTML='';
+  const mKey=$('f-mode').value;
+  const cats=MODES[mKey];
+  if(compact) grid.classList.add('compact'); else grid.classList.remove('compact');
+
+  const shared=sharedIngs(current);
+  const conflict=reheatingConflict(current);
+
+  current.forEach((item,idx)=>{
+    if(!item){
+      const el=document.createElement('div');
+      el.className='empty-slot anim-in';
+      el.style.animationDelay=idx*0.06+'s';
+      el.textContent='No match for this filter combo';
+      grid.appendChild(el);return;
+    }
+    const css=CAT_CSS[item.category]||'blue';
+    const pct=(item.rating/10*100).toFixed(0);
+    const diets=item.dietary.split(',').map(s=>s.trim()).filter(Boolean);
+    const cuisines=item.cuisine.split(',').map(s=>s.trim()).slice(0,2);
+    const ingShared=item.shared_ing.split(',').map(s=>s.trim().toLowerCase()).filter(s=>shared.includes(s));
+
+    const el=document.createElement('div');
+    el.className='brick anim-in'+(locked[idx]?' locked':'');
+    el.dataset.cat=item.category;
+    el.dataset.idx=idx;
+    el.style.animationDelay=idx*0.07+'s';
+    el.draggable=true;
+    el.addEventListener('dragstart',e=>{e.dataTransfer.setData('idx',idx);el.style.opacity='.4';});
+    el.addEventListener('dragend',()=>el.style.opacity='');
+    el.addEventListener('dragover',e=>{e.preventDefault();el.style.outline='2px solid var(--amber)';});
+    el.addEventListener('dragleave',()=>el.style.outline='');
+    el.addEventListener('drop',e=>{
+      e.preventDefault();el.style.outline='';
+      const from=parseInt(e.dataTransfer.getData('idx'));
+      const to=idx;
+      if(from===to) return;
+      [current[from],current[to]]=[current[to],current[from]];
+      const la=locked[from],lb=locked[to];
+      if(la) locked[to]=la; else delete locked[to];
+      if(lb) locked[from]=lb; else delete locked[from];
+      renderAll();
+    });
+
+    el.innerHTML=`
+      <div class="brick-stripe"></div>
+      <button class="lock-btn ${locked[idx]?'locked':''}" onclick="toggleLock(${idx})" title="${locked[idx]?'Unlock':'Lock'}">${locked[idx]?'🔒':'·'}</button>
+      <div class="brick-body">
+        <div class="brick-cat">${item.category}</div>
+        <div class="brick-name">${item.name}</div>
+        <div class="brick-score-row">
+          <div class="brick-score">${item.rating}<span class="brick-score-denom">/10</span></div>
+          <div class="rating-track" style="flex:1"><div class="rating-fill" style="width:${pct}%"></div></div>
+        </div>
+        ${conflict?`<div class="conflict-hint">⚠ Reheat conflict — check sequence</div>`:''}
+        <div class="macro-row">
+          <span class="macro">${item.cal} cal</span>
+          <span class="macro ${item.protein>=20?'highlight':''}">${item.protein}g pro</span>
+          <span class="macro">${item.carbs}g carbs</span>
+          <span class="macro">${item.fat}g fat</span>
+          <span class="macro">$${item.cost.toFixed(2)}</span>
+        </div>
+        <div class="detail-grid">
+          <div class="detail"><span class="detail-lbl">Reheat</span>${item.reheat}</div>
+          <div class="detail"><span class="detail-lbl">Thaw</span>${item.thaw} min</div>
+          <div class="detail"><span class="detail-lbl">Freezes</span>${item.freeze_life} wks</div>
+          <div class="detail"><span class="detail-lbl">Prep</span>${item.active_prep} min</div>
+          <div class="detail"><span class="detail-lbl">Size</span>${item.container}</div>
+          <div class="detail"><span class="detail-lbl">Tex/Flav</span>${item.tex}/${item.flav}</div>
+        </div>
+        <div class="tag-row">
+          ${cuisines.map(c=>`<span class="tag tag-cuisine">${c}</span>`).join('')}
+          ${diets.map(d=>`<span class="tag tag-${DIET_CSS[d]||'diet'}">${d}</span>`).join('')}
+          ${ingShared.length?`<span class="tag tag-shared">↕ ${ingShared.slice(0,2).join(', ')}</span>`:''}
+        </div>
+        ${(()=>{
+          if(pantry.size===0) return '';
+          const itemIngs=item.shared_ing.split(',').map(s=>s.trim().toLowerCase()).filter(s=>s&&s!=='none');
+          const matched=itemIngs.filter(ing=>[...pantry].some(p=>ing.includes(p.toLowerCase())||p.toLowerCase().includes(ing)));
+          const pct=itemIngs.length?Math.round(matched.length/itemIngs.length*100):100;
+          if(pct===0) return '';
+          const col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'#aaa';
+          const bg=pct>=80?'var(--green-soft)':pct>=50?'var(--amber-soft)':'var(--cream)';
+          return `<div style="font-size:10px;font-weight:600;color:${col};background:${bg};padding:3px 8px;border-radius:6px;margin-bottom:6px;display:inline-block">🥫 ${pct}% pantry match</div>`;
+        })()}
+        ${item.notes?`<div class="brick-note">${item.notes}</div>`:''}
+        <div class="brick-footer">
+          <button class="bfoot-btn" onclick="swapSlot(${idx})">⟳ Swap</button>
+          <button class="bfoot-btn" onclick="pinCompatible(${idx})">🔗 Compat</button>
+          <button class="bfoot-btn" onclick="spotlightIng('${item.shared_ing.split(',')[0].trim()}')">🔍 Spot</button>
+        </div>
+      </div>`;
+    grid.appendChild(el);
+  });
+}
+
+function renderTotals(){
+  const t=getTotals(current);
+  $('t-cal').textContent=Math.round(t.cal);
+  $('t-pro').textContent=Math.round(t.pro)+'g';
+  $('t-carbs').textContent=Math.round(t.carbs)+'g';
+  $('t-fat').textContent=Math.round(t.fat)+'g';
+  $('t-cost').textContent='$'+t.cost.toFixed(2);
+  $('t-prep').textContent=t.prep+'min';
+  const{common,mixed}=getCuisineOverlap(current);
+  $('t-cuisine').textContent=mixed?'Mixed cuisine':common.slice(0,2).join(', ');
+  $('t-cuisine').style.color=mixed?'#aaa':'var(--green)';
+  const warn=$('t-warn');
+  warn.style.display=reheatingConflict(current)?'block':'none';
+  updateGoals();
+}
+
+function updateGoals(){
+  const t=getTotals(current);
+  const gc=parseInt($('g-cal').value)||null;
+  const gp=parseInt($('g-pro').value)||null;
+  const bar=$('goal-bars');
+  bar.style.display=(gc||gp)?'flex':'none';
+  if(gc){
+    const pct=Math.min(100,t.cal/gc*100);
+    $('gl-cal').style.width=pct+'%';
+    $('gl-cal').style.background=t.cal>gc*1.1?'var(--red)':t.cal>gc*.9?'var(--green)':'var(--amber)';
+    $('gl-cal-val').textContent=`${Math.round(t.cal)}/${gc}`;
+  }
+  if(gp){
+    const pct=Math.min(100,t.pro/gp*100);
+    $('gl-pro').style.width=pct+'%';
+    $('gl-pro').style.background=t.pro>=gp?'var(--green)':'var(--amber)';
+    $('gl-pro-val').textContent=`${Math.round(t.pro)}g/${gp}g`;
+  }
+}
+
+function renderSidebar(){
+  // Reheat sequence
+  const seq=buildSeq(current);
+  const seqEl=$('reheat-seq-container');
+  seqEl.innerHTML=seq.map((s,i)=>`
+    <div class="seq-step anim-in" style="animation-delay:${i*.05}s">
+      <div class="seq-num">${i+1}</div>
+      <div class="seq-body">
+        <div class="seq-timing">${s.t}</div>
+        ${s.body}
+      </div>
+    </div>`).join('');
+
+  // Shared ings
+  const shared=sharedIngs(current);
+  const siw=$('shared-ings-wrap');
+  siw.style.display=shared.length?'block':'none';
+  $('shared-ings-content').innerHTML=shared.map(s=>`<span class="info-tag shared-ing-badge">${s}</span>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// SAVE / LOG
+// ═══════════════════════════════════════════
+function saveMeal(){
+  if(!current.some(Boolean)) return;
+  $('save-name').value='';
+  openModal('modal-save');
+}
+function submitSave(){
+  const name=$('save-name').value.trim()||'Untitled Meal';
+  const t=getTotals(current);
+  favs.unshift({name,ids:current.filter(Boolean).map(i=>i.id),cal:Math.round(t.cal),pro:Math.round(t.pro),cost:t.cost.toFixed(2),date:new Date().toLocaleDateString()});
+  save('ll_favs2',favs);closeModal('modal-save');renderFavs();
+}
+
+function logMeal(){
+  if(!current.some(Boolean)) return;
+  const names=current.filter(Boolean).map(i=>i.name.replace(/^\S+\s*/,'')).join(' · ');
+  $('rate-sub').textContent=names;
+  $('rate-notes').value='';
+  rateVal=0;renderStars(0);
+  openModal('modal-rate');
+}
+function submitRate(){
+  const t=getTotals(current);
+  hist.unshift({ids:current.filter(Boolean).map(i=>i.id),rating:rateVal,notes:$('rate-notes').value,date:new Date().toLocaleDateString(),cal:Math.round(t.cal),cost:t.cost.toFixed(2)});
+  save('ll_hist2',hist);closeModal('modal-rate');renderHist();
+}
+
+document.querySelectorAll('.modal-star').forEach(s=>{
+  s.addEventListener('click',()=>{rateVal=+s.dataset.v;renderStars(rateVal);});
+  s.addEventListener('mouseover',()=>renderStars(+s.dataset.v));
+  s.addEventListener('mouseout',()=>renderStars(rateVal));
+});
+function renderStars(n){document.querySelectorAll('.modal-star').forEach(s=>s.classList.toggle('on',+s.dataset.v<=n));}
+
+function openModal(id){$(id).classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ═══════════════════════════════════════════
+// WEEKLY PLANNER
+// ═══════════════════════════════════════════
+function generateWeek(){
+  const mKey=$('wk-mode').value;
+  const dietary=$('wk-diet').value;
+  weekData=[];
+  const grid=$('week-grid');grid.innerHTML='';
+  let totalCost=0;
+
+  DAYS.forEach((day,di)=>{
+    const mode=mKey==='mixed'?Object.keys(MODES)[di%4]:mKey;
+    const cats=MODES[mode];
+    const items=cats.map(cat=>{let p=pool(cat,'',dietary);return weightedPick(p);});
+    weekData.push({day,items,mode});
+    const t=getTotals(items);totalCost+=t.cost;
+    const{common}=getCuisineOverlap(items);
+
+    const card=document.createElement('div');
+    card.className='week-day-card anim-in';
+    card.style.animationDelay=di*.05+'s';
+    card.innerHTML=`
+      <div class="week-day-head">
+        <div class="week-day-name">${day}</div>
+        <div class="week-day-stats">${Math.round(t.cal)} cal · ${Math.round(t.pro)}g protein · $${t.cost.toFixed(2)} · ${common.length?common[0]:'Mixed'}</div>
+      </div>
+      <div class="week-day-bricks">
+        ${items.filter(Boolean).map(i=>{
+          const css=CAT_CSS[i.category]||'blue';
+          return `<span class="mini-brick" style="background:var(--${css}-soft);color:var(--${css});border-color:var(--${css})">${i.name}</span>`;
+        }).join('')}
+      </div>`;
+    grid.appendChild(card);
+  });
+  $('hd-week-cost').textContent=totalCost.toFixed(2);
+}
+
+function toggleShoppingList(){
+  if(!weekData.length){generateWeek();return;}
+  const wrap=$('shopping-wrap');
+  if(wrap.style.display==='none'){
+    buildShoppingList();wrap.style.display='block';
+  } else {wrap.style.display='none';}
+}
+
+function buildShoppingList(){
+  const ingMap={};
+  weekData.forEach(({items})=>items.filter(Boolean).forEach(item=>{
+    item.shared_ing.split(',').map(s=>s.trim()).filter(s=>s&&s.toLowerCase()!=='none').forEach(ing=>{
+      if(!ingMap[ing]) ingMap[ing]=new Set();
+      ingMap[ing].add(item.name.replace(/^\S+\s*/,''));
+    });
+  }));
+  const list=$('shopping-list');
+  list.innerHTML=Object.entries(ingMap).sort(([a],[b])=>a.localeCompare(b)).map(([ing,meals])=>`
+    <div class="shop-item">
+      <div class="shop-check" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div>
+      <span class="shop-name">${ing}</span>
+      <span class="shop-meals">${[...meals].slice(0,2).join(', ')}${meals.size>2?'…':''}</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════
+function renderHist(){
+  const el=$('history-list');
+  if(!hist.length){el.innerHTML='<div class="empty-state">No meals logged yet.<br>Hit ✓ Log after building a meal.</div>';return;}
+  el.innerHTML=hist.slice(0,40).map((h,i)=>{
+    const items=h.ids.map(id=>RAW.find(i=>i.id===id)).filter(Boolean);
+    return `<div class="list-card anim-in" style="animation-delay:${i*.04}s" onclick="loadEntry(${i},'hist')">
+      <div style="flex:1">
+        <div class="list-card-bricks">${items.map(it=>{const css=CAT_CSS[it.category]||'blue';return`<span class="mini-brick" style="background:var(--${css}-soft);color:var(--${css});border-color:var(--${css});font-size:10px">${it.name}</span>`;}).join('')}</div>
+        ${h.notes?`<div style="font-size:11px;color:#aaa;margin-top:4px;font-style:italic">"${h.notes}"</div>`:''}
+      </div>
+      <div class="list-card-meta">
+        ${h.rating?`<div class="star-rating">${'★'.repeat(h.rating)}</div>`:''}
+        <div>${h.cal} cal · $${h.cost}</div>
+        <div>${h.date}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function clearHistory(){hist=[];save('ll_hist2',hist);renderHist();}
+function loadEntry(idx,type){
+  const entry=type==='hist'?hist[idx]:favs[idx];
+  const items=entry.ids.map(id=>RAW.find(i=>i.id===id)).filter(Boolean);
+  current=items;locked={};renderAll();showTab('builder');
+}
+
+// ═══════════════════════════════════════════
+// FAVORITES
+// ═══════════════════════════════════════════
+function renderFavs(){
+  const el=$('fav-list');
+  if(!favs.length){el.innerHTML='<div class="empty-state">No saved meals yet.<br>Hit ★ Save to bookmark a combo.</div>';return;}
+  el.innerHTML=favs.map((f,i)=>{
+    const items=f.ids.map(id=>RAW.find(i=>i.id===id)).filter(Boolean);
+    return `<div class="list-card anim-in" style="animation-delay:${i*.04}s">
+      <div style="flex:1" onclick="loadEntry(${i},'fav')">
+        <div class="list-card-name">${f.name}</div>
+        <div class="list-card-bricks">${items.map(it=>{const css=CAT_CSS[it.category]||'blue';return`<span class="mini-brick" style="background:var(--${css}-soft);color:var(--${css});border-color:var(--${css});font-size:10px">${it.name}</span>`;}).join('')}</div>
+        <div style="font-size:11px;color:#aaa;margin-top:4px">${f.cal} cal · $${f.cost} · ${f.date}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="loadEntry(${i},'fav')">Load</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteFav(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function deleteFav(i){favs.splice(i,1);save('ll_favs2',favs);renderFavs();}
+
+// ═══════════════════════════════════════════
+// SPOTLIGHT
+// ═══════════════════════════════════════════
+function doSpotlight(){
+  const q=$('spot-q').value.trim().toLowerCase();
+  const cat=$('spot-cat').value;
+  let results=RAW;
+  if(cat) results=results.filter(i=>i.category===cat);
+  if(q) results=results.filter(i=>i.name.toLowerCase().includes(q)||i.shared_ing.toLowerCase().includes(q)||i.cuisine.toLowerCase().includes(q)||i.dietary.toLowerCase().includes(q));
+  results=results.sort((a,b)=>b.rating-a.rating).slice(0,48);
+  renderSpotResults(results);
+}
+
+function renderSpotResults(items){
+  const el=$('spot-results');
+  el.innerHTML=items.map(i=>{
+    const css=CAT_CSS[i.category]||'blue';
+    return `<div class="spot-card anim-in" onclick="showSpotDetail(${i.id})">
+      <div class="spot-cat" style="color:var(--${css})">${i.category.toUpperCase()}</div>
+      <div class="spot-name">${i.name}</div>
+      <div class="spot-score" style="color:var(--${css})">${i.rating}</div>
+    </div>`;
+  }).join('');
+}
+
+function showSpotDetail(id){
+  const item=RAW.find(i=>i.id===id);if(!item) return;
+  const css=CAT_CSS[item.category]||'blue';
+  const el=$('spot-detail');
+  el.innerHTML=`<div class="spot-detail anim-in">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <div class="spot-cat" style="color:var(--${css})">${item.category.toUpperCase()}</div>
+        <div style="font-family:var(--font-head);font-size:24px;font-weight:800">${item.name}</div>
+      </div>
+      <button class="btn btn-primary" onclick="useInBuilder(${id})">Use in Builder →</button>
+    </div>
+    <div class="spot-detail-grid">
+      ${[['Rating',item.rating+'/10'],['Calories',item.cal],['Protein',item.protein+'g'],['Carbs',item.carbs+'g'],['Fat',item.fat+'g'],['Cost','$'+item.cost],['Reheat',item.reheat],['Thaw',item.thaw+' min'],['Freeze Life',item.freeze_life+' wks'],['Container',item.container]].map(([l,v])=>`<div class="spot-stat"><div class="spot-stat-val" style="color:var(--${css})">${v}</div><div class="spot-stat-lbl">${l}</div></div>`).join('')}
+    </div>
+    <div style="font-size:13px;margin-bottom:6px"><strong>Key ingredients:</strong> ${item.shared_ing}</div>
+    <div style="font-size:13px;margin-bottom:6px"><strong>Cuisines:</strong> ${item.cuisine}</div>
+    <div style="font-size:13px;color:#888">${item.dietary}</div>
+    ${item.notes?`<div style="margin-top:8px;font-size:12px;color:#aaa;font-style:italic;background:var(--cream);padding:8px 12px;border-radius:8px">${item.notes}</div>`:''}
+  </div>`;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function useInBuilder(id){
+  const item=RAW.find(i=>i.id===id);if(!item) return;
+  const mKey=$('f-mode').value;
+  const cats=MODES[mKey];
+  const idx=cats.indexOf(item.category);
+  if(idx>=0){current[idx]=item;locked[idx]=item;renderAll();}
+  showTab('builder');
+}
+
+function spotlightIng(ing){
+  $('spot-q').value=ing;
+  showTab('spotlight');
+  doSpotlight();
+}
+
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+function setBottomNav(tab){
+  document.querySelectorAll('.bnav-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===tab);
+  });
+  location.hash = tab;
+}
+
+function toggleDrawer(){
+  document.getElementById('drawer').classList.toggle('open');
+  document.getElementById('drawer-overlay').classList.toggle('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+function toggleFilterSheet(){
+  document.getElementById('filter-sheet').classList.toggle('open');
+  document.getElementById('filter-sheet-overlay').classList.toggle('open');
+  document.getElementById('sidebar-inner').style.display='';
+}
+function closeFilterSheet(){
+  document.getElementById('filter-sheet').classList.remove('open');
+  document.getElementById('filter-sheet-overlay').classList.remove('open');
+}
+
+function updateActiveFilters(){
+  const mode=document.getElementById('f-mode');
+  const cuisine=document.getElementById('f-cuisine');
+  const dietary=document.getElementById('f-dietary');
+  const pantryOn=document.getElementById('f-pantry')&&document.getElementById('f-pantry').checked;
+  const row=document.getElementById('active-filters-row');
+  if(!row) return;
+  const tags=[];
+  if(mode&&mode.selectedIndex>0) tags.push(mode.options[mode.selectedIndex].text.replace(/^[^\s]+\s/,''));
+  if(cuisine&&cuisine.value&&cuisine.value!=='__coherent__') tags.push(cuisine.value);
+  if(dietary&&dietary.value) tags.push(dietary.value);
+  if(pantryOn) tags.push('🥫 Pantry');
+  row.innerHTML=tags.map(t=>`<span class="active-filter-tag">${t}</span>`).join('');
+}
+
+function showTab(name){
+  const pages=['builder','weekly','history','favorites','spotlight','pantry'];
+  pages.forEach(p=>{
+    $('page-'+p).style.display=p===name?(p==='builder'?'flex':'block'):'none';
+  });
+  document.querySelectorAll('.htab').forEach((t,i)=>t.classList.toggle('active',pages[i]===name));
+  if(name==='history') renderHist();
+  if(name==='favorites') renderFavs();
+  if(name==='spotlight') doSpotlight();
+  if(name==='pantry'){renderPantry();updatePantryUI();}
+}
+
+
+// ═══════════════════════════════════════════
+// PANTRY
+// ═══════════════════════════════════════════
+
+const PANTRY_GROUPS = {
+  proteins: {label:'🥩 Proteins & Meat', items:['chicken','beef','pork','turkey','lamb','shrimp','salmon','tuna','cod','tilapia','duck','bacon','pancetta','chorizo','sausage','anchovy','crab','octopus','calamari','fish sauce']},
+  produce: {label:'🥦 Produce & Vegetables', items:['garlic','onion','ginger','tomato','lemon','lime','orange','carrot','celery','parsley','cilantro','basil','thyme','rosemary','bay leaf','kale','spinach','mushrooms','peppers','jalapeño','chipotle','scallion','shallot','leek','fennel','apple','banana','mango','peach','strawberry','blueberry','cherry','pear','rhubarb','butternut squash','sweet potato','potato','beet','zucchini','eggplant','artichoke','asparagus','broccoli','cauliflower','Brussels sprouts','bok choy','cabbage','corn','peas','green beans','snap peas','edamame','tomatillo','lemongrass','galangal','kaffir lime','chili']},
+  dairy: {label:'🧀 Dairy & Eggs', items:['butter','cream','milk','cream cheese','cheddar','gruyère','parmesan','pecorino','mozzarella','ricotta','egg','egg yolk','sour cream','yogurt','condensed milk','evaporated milk']},
+  pantry_staples: {label:'🫙 Pantry Staples', items:['sugar','brown sugar','salt','black pepper','flour','breadcrumbs','bread','cornmeal','masa harina','tahini','peanut butter','dark chocolate','vanilla','gelatin','tapioca','lentils','chickpeas','cannellini','black beans','pinto beans','kidney beans','navy beans','walnuts','almonds','pine nuts','pistachios','capers','olives','mayo','ketchup','molasses','maple syrup','honey','pomegranate molasses','rose water']},
+  spices: {label:'🌶️ Spices & Herbs', items:['cumin','coriander','turmeric','paprika','smoked paprika','cinnamon','cardamom','cloves','nutmeg','star anise','curry powder','garam masala','Old Bay','chili powder','red pepper flakes','white pepper','saffron','oregano','dill','tarragon','sumac','harissa']},
+  sauces: {label:'🍅 Sauces & Condiments', items:['soy sauce','miso','mirin','sake','rice vinegar','fish sauce','oyster sauce','hoisin','gochujang','sesame oil','Worcestershire','hot sauce','sriracha','balsamic','red wine vinegar','apple cider vinegar','dijon mustard']},
+  grains: {label:'🌾 Grains, Pasta & Bread', items:['white rice','brown rice','jasmine rice','basmati rice','wild rice','pasta','orzo','ramen noodles','soba noodles','rice noodles','udon','polenta','grits','couscous','quinoa','farro','barley','bulgur','freekeh']},
+  liquids: {label:'🫗 Oils, Liquids & Wine', items:['olive oil','neutral oil','coconut milk','beef broth','chicken broth','vegetable broth','white wine','red wine','heavy cream','coconut water','lemon juice','lime juice','orange juice']}
+};
+
+let pantry = new Set(JSON.parse(localStorage.getItem('ll_pantry')||'[]'));
+
+function savePantry(){localStorage.setItem('ll_pantry',JSON.stringify([...pantry]));}
+
+function togglePantryItem(ing){
+  if(pantry.has(ing)) pantry.delete(ing); else pantry.add(ing);
+  savePantry();
+  renderPantry();
+  updatePantryUI();
+}
+
+function updatePantryUI(){
+  const count=pantry.size;
+  const chip=$('pantry-chip');
+  if(chip){chip.style.display=count>0?'flex':'none';const pc=$('pantry-count');if(pc)pc.textContent=count;}
+  const row=$('pantry-filter-row');
+  if(row) row.style.display=count>0?'flex':'none';
+  const banner=$('pantry-match-banner');
+  if(banner){banner.style.display=count>0?'flex':'none';const bc=$('banner-count');if(bc)bc.textContent=count;}
+  const matched=RAW.filter(item=>itemMatchesPantry(item)).length;
+  const mc=$('pantry-matched');if(mc)mc.textContent=matched;
+}
+
+function itemMatchesPantry(item){
+  if(pantry.size===0) return true;
+  const itemIngs=item.shared_ing.split(',').map(s=>s.trim().toLowerCase()).filter(s=>s&&s!=='none'&&s!=='pre-seasoned');
+  if(!itemIngs.length) return true;
+  const matched=itemIngs.filter(ing=>[...pantry].some(p=>ing.includes(p.toLowerCase())||p.toLowerCase().includes(ing)));
+  return matched.length/itemIngs.length>=0.5;
+}
+
+function renderPantry(){
+  const grid=$('pantry-grid');
+  if(!grid) return;
+  const q=($('pantry-search')||{value:''}).value.trim().toLowerCase();
+  const gf=($('pantry-group-filter')||{value:''}).value;
+  grid.innerHTML='';
+  const groups=gf?{[gf]:PANTRY_GROUPS[gf]}:PANTRY_GROUPS;
+  Object.entries(groups).forEach(([key,grp])=>{
+    let items=grp.items;
+    if(q) items=items.filter(i=>i.toLowerCase().includes(q));
+    if(!items.length) return;
+    const hdr=document.createElement('div');
+    hdr.className='pantry-group';
+    hdr.textContent=grp.label;
+    grid.appendChild(hdr);
+    items.forEach(ing=>{
+      const checked=pantry.has(ing);
+      const count=RAW.filter(item=>item.shared_ing.toLowerCase().includes(ing.toLowerCase())).length;
+      const el=document.createElement('div');
+      el.className='pantry-item'+(checked?' checked':'');
+      el.innerHTML=`<div class="pantry-check">${checked?'✓':''}</div><div class="pantry-label">${ing}</div>${count>0?`<div class="pantry-match-tag">${count}</div>`:''}`;
+      el.addEventListener('click',()=>togglePantryItem(ing));
+      grid.appendChild(el);
+    });
+  });
+  updatePantryUI();
+}
+
+function selectAllPantry(){
+  const q=($('pantry-search')||{value:''}).value.trim().toLowerCase();
+  const gf=($('pantry-group-filter')||{value:''}).value;
+  const groups=gf?{[gf]:PANTRY_GROUPS[gf]}:PANTRY_GROUPS;
+  Object.values(groups).forEach(grp=>{grp.items.filter(i=>!q||i.toLowerCase().includes(q)).forEach(i=>pantry.add(i));});
+  savePantry();renderPantry();updatePantryUI();
+}
+
+function clearPantry(){
+  pantry.clear();savePantry();renderPantry();updatePantryUI();
+  const cb=$('f-pantry');if(cb)cb.checked=false;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+// Populate cuisine filter
+const cuisines=[...new Set(RAW.flatMap(i=>i.cuisine.split(',').map(s=>s.trim())))].filter(Boolean).sort();
+const cSel=$('f-cuisine');
+cuisines.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cSel.appendChild(o);});
+
+// Populate spotlight category filter  
+const sCats=[...new Set(RAW.map(i=>i.category))].sort();
+const scSel=$('spot-cat');
+sCats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;scSel.appendChild(o);});
+
+// Add change listeners for cuisine/dietary filters
+$('f-cuisine').addEventListener('change',()=>{shuffle();updateActiveFilters();});
+$('f-dietary').addEventListener('change',()=>{shuffle();updateActiveFilters();});
+$('f-mode').addEventListener('change',()=>{shuffle();updateActiveFilters();});
+
+// Initial shuffle
+shuffle();
+// Init pantry
+updatePantryUI();
+</script>
+<script>
+// ── SERVICE WORKER ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('[PWA] SW registered:', reg.scope);
+    }).catch(err => console.warn('[PWA] SW failed:', err));
+  });
+}
+
+// ── INSTALL PROMPT ──
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('install-btn');
+  if(btn) btn.style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('install-btn');
+  if(btn) btn.style.display = 'none';
+  deferredPrompt = null;
+});
+function installApp(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r => {
+    deferredPrompt = null;
+    document.getElementById('install-btn').style.display = 'none';
+  });
+}
+
+// ── HASH ROUTING (for shortcuts) ──
+function handleHash(){
+  const hash = location.hash.replace('#','');
+  if(hash && ['builder','weekly','history','favorites','spotlight','pantry'].includes(hash)){
+    showTab(hash);
+    setBottomNav(hash);
+  }
+}
+window.addEventListener('hashchange', handleHash);
+handleHash();
+
+// ── HAPTIC FEEDBACK (iOS/Android) ──
+function haptic(style='light'){
+  if(window.navigator && window.navigator.vibrate){
+    const patterns = {light:10, medium:20, heavy:40};
+    navigator.vibrate(patterns[style]||10);
+  }
+}
+
+// ── SWIPE TO SWAP bricks ──
+(function setupSwipe(){
+  let startX=0, startY=0, brickEl=null;
+  document.addEventListener('touchstart', e => {
+    const brick = e.target.closest('.brick');
+    if(!brick) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    brickEl = brick;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if(!brickEl) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.5){
+      const idx = parseInt(brickEl.dataset.idx);
+      if(!isNaN(idx)){
+        haptic('medium');
+        swapSlot(idx);
+      }
+    }
+    brickEl = null;
+  }, {passive:true});
+})();
+</script>
+</body>
+</html>
